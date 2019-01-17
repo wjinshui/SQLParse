@@ -1,7 +1,5 @@
 package cn.edu.fjut.ast;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.List;
 
 import com.alibaba.druid.sql.SQLUtils;
@@ -16,10 +14,12 @@ import com.alibaba.druid.util.JdbcConstants;
 public class MySQLParse {
 
 	SchemaRepository repository;
+	//final String dbType = JdbcConstants.SQLITE;
 	final String dbType = JdbcConstants.MYSQL;
 	
+	
 	public MySQLParse() {
-		
+			
 		repository = new SchemaRepository(dbType);
 		repository.console("CREATE TABLE Actor_Award(\n" + 
 				"  title CHAR(255), \n" + 
@@ -123,9 +123,8 @@ public class MySQLParse {
 	
 	public MySqlSchemaStatVisitor getVisitor(String sql)
 	{
-		System.out.println(sql);
+		
 		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
-		assertEquals(1, stmtList.size());
 		SQLSelectStatement stmt = (SQLSelectStatement) stmtList.get(0);		
 		MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
 		repository.resolve(stmt);		

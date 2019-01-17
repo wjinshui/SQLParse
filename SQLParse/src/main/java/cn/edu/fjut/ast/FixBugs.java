@@ -1,30 +1,22 @@
 package cn.edu.fjut.ast;
 
-import java.util.List;
-
-import cn.edu.fjut.DBHelper;
-import cn.edu.fjut.bean.ExerciseSubmission;
+import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
 
 public class FixBugs {
 
 	public static void main(String[] args) throws Exception {
-		DBHelper helper = DBHelper.getInstance();
-		List<ExerciseSubmission> solutions = helper.getAllSubmission();
-		int success =0 , total = 0;		
-		
-		for (ExerciseSubmission solu : solutions) {
-			String solution = solu.getSubmitted_answer().trim();
-			if(solution.length() < 20)
-				continue;
-			if(solution.endsWith(";"))
-				solution = solution.substring(0, solution.length() - 1);	
-			total ++;
-	
-			
-			success ++;				
-
-			System.out.printf("%d / %d\n", success, total);
-		}
+		String sql = "SELECT dw.id, dw.first_name, dw.last_name \n" + 
+				"FROM (person p NATURAL JOIN director NATURAL JOIN writer) AS dw \n" + 
+				"GROUP BY dw.id \n" + 
+				"HAVING count(*) > 1;" ; 
+			/*	"where r.id in (\n" + 
+				"select q1.id from (\n" + 
+				"select id, count(*) as c from role group by id) as q1\n" + 
+				"where q1.c = \n" + 
+				"(select max(q1.c) from (select id, count(*) as c from role group by id) as q1));";*/
+		MySQLParse parse = new MySQLParse();
+		MySqlSchemaStatVisitor visitor =  parse.getVisitor(sql);
+		System.out.println(visitor.getTables());	
 		
 
 	}
