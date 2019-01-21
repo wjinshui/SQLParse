@@ -7,6 +7,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -67,7 +68,54 @@ public class DBHelper {
 		}		
 	}
 	
-	
+	/**
+	 * 初始化成绩
+	 * 判断为正确为满分100，　编译不通过的０分
+	 * 包含delete的SQL只有８条，手工修改．
+	 */
+	public void initialScore()
+	{
+		String sql ;
+		sql = "update exercises_judgement set score = 100 where is_correct = 1";
+		List<String> ids = new ArrayList<String>();
+		try {
+			stmt.executeUpdate(sql);
+			List<ExerciseSubmission> submissions = getSubmissionWithCond(" where is_correct = 0");
+			for (ExerciseSubmission exerciseSubmission : submissions) {
+				System.out.format("%d / %d \n", submissions.indexOf(exerciseSubmission), submissions.size());
+				String answer = exerciseSubmission.getSubmitted_answer();	
+				// 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．
+				if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374") )
+				{
+					System.out.println(exerciseSubmission);
+					continue;
+				}
+				if(answer.trim().length() < 18 || getAnswer(answer).size() ==0)
+				{
+					ids.add(exerciseSubmission.getId());
+					continue;
+				}			
+			}
+			System.out.println(ids.size());
+			sql = "update exercises_judgement set score = 0 where id  = ?";		
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (String id : ids) {
+				ps.setString(1, id);
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			ps.close();
+			conn.commit();
+			conn.setAutoCommit(true);		
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
 
 	
 	public List<String> getAllSolution()
@@ -107,9 +155,31 @@ public class DBHelper {
 			conn.setAutoCommit(true);			
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
-		
+		}		
 	}
+	
+	public void updateScore(List<String> updateToTrue, float score)
+	{		
+		String sql;		
+		sql = "update exercises_judgement set score = ? where id  = ?";		
+		try {
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (String id : updateToTrue) {
+				ps.setFloat(1, score);
+				ps.setString(2, id);
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			ps.clearBatch();
+			ps.clearParameters();
+			conn.commit();
+			conn.setAutoCommit(true);			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+	}
+	
 	public List<ExerciseSubmission> getSubmission(int exercise_id)	
 	{
 		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();
@@ -155,55 +225,15 @@ public class DBHelper {
 				result.add(row);
 			}
 			
-		}catch (NullPointerException e) {
-			e.printStackTrace();			
-		} catch (java.sql.SQLException e) {
-			System.out.println(e.getMessage());
-			
 		}
 		catch (Exception e) {
-			//e.printStackTrace();
+			result = new HashSet<Set<String>>();
 		}
 		return result;
 	}
 	
-	public HashMap<Integer, Integer> getAnswer11(String sql)
-	{
-		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
-		try {
-			ResultSet rs = stmt.executeQuery(sql);
-			while(rs.next())
-			{
-				result.put(rs.getInt(1), rs.getInt(2));
-			}
-		} catch (Exception e) {			
-			//e.printStackTrace();			
-		}
-		return result;
-	}
-	
-	/**
-	 * 对于一些只返回一个数字的问题，可以共用该方法．
-	 * 现有的题目有10, 12．
-	 * @param sql
-	 * @return
-	 */
-	public int getScalarAnswer(String sql)
-	{		
-		int result = -1;
-		try {
-			ResultSet rs = stmt.executeQuery(sql);
-			if(rs.next())
-				result = rs.getInt(1);
-			//　由于jdbc没有 executeScalar语句，当executeQuery返回多条时，该题肯定为错
-			if(rs.next())
-				result = -1;
-		} catch (Exception e) {			
-			System.out.println(e.getMessage());			
-		}
-		return result;
-	}
-	
+
+
 	/**用于获取参考执行答案sql得到的查询结果，这样考生答案就可以跟这个查询结果进行直接对比．
 	 * @return
 	 */
@@ -227,6 +257,28 @@ public class DBHelper {
 			e.printStackTrace();
 		}
 		return answer;
+	}
+	
+	public List<ExerciseSubmission> getSubmissionWithCond(String condition)
+	{
+		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();
+		String sql  = "select * from exercises_codingexercisesubmission";
+
+		sql = "select exercisesubmission_ptr_id, submitted_answer, answer, exercise_id , is_correct "
+				+ "from submitanswer " + condition;
+		try {
+			ResultSet rSet = stmt.executeQuery(sql);
+			while(rSet.next())
+			{
+				ExerciseSubmission submission = new ExerciseSubmission(rSet.getString(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
+				results.add(submission);
+			}
+			rSet.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println(e.getMessage());
+		}		
+		return results;
 	}
 	
 	public List<ExerciseSubmission> getAllSubmission()
@@ -255,11 +307,12 @@ public class DBHelper {
 	public static void main(String []args) {
 		
 		DBHelper helper = DBHelper.getInstance();
-		List<ExerciseSubmission> submissions = helper.getAllSubmission();
-		for (ExerciseSubmission exerciseSubmission : submissions) {
-			System.out.println(exerciseSubmission);
-		}
-            
+		String[] toFalse = new String[] {"917","1569"};
+		List<String> updateToFalse = Arrays.asList(toFalse);
+		helper.updateJudgement(updateToFalse, false);
+		helper.updateScore(updateToFalse, 0);
+		System.out.println("Mission Complete!");
+		
         
     }
 	

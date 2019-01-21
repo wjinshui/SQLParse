@@ -31,8 +31,7 @@ public class EvalResult {
 	
 	public static void main(String[] args) {		
 		EvalResult evalResult = new EvalResult();		
-		for(int i=10; i< 25; i++)
-			evalResult.evalExercise(i);
+		evalResult.dbHelper.initialScore();
 	}
 	
 	/**对指定题进行改题，　依据是对比输入sql与答案sql是否相似进行
