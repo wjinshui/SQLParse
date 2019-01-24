@@ -13,9 +13,11 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 
 import cn.edu.fjut.bean.ExerciseJudgement;
 import cn.edu.fjut.bean.ExerciseSubmission;
+import cn.edu.fjut.util.Log;
 
 public class DBHelper {
 	
@@ -68,6 +70,29 @@ public class DBHelper {
 		}		
 	}
 	
+	public void exportResult(String sql)
+	{
+		try {
+			ResultSet rs = stmt.executeQuery(sql);			
+			StringBuffer sb = new StringBuffer();
+			Set<String> set = new HashSet<String>();			
+			while(rs.next())
+			{
+				String str = rs.getString(1).trim();
+				str = str.replaceAll("[\r\n\t]", " ").toLowerCase();
+				str=str.replaceAll(" +"," ");
+				set.add(str);
+			}
+			for (String string : set) {
+				sb.append(string + "\n");
+			}
+			Log log = new Log();
+			log.log(sb.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * 初始化成绩
 	 * 判断为正确为满分100，　编译不通过的０分
@@ -111,10 +136,7 @@ public class DBHelper {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		
-		
-		
+		}		
 	}
 
 	
@@ -308,10 +330,13 @@ public class DBHelper {
 		
 		DBHelper helper = DBHelper.getInstance();
 		String[] toFalse = new String[] {"917","1569"};
-		List<String> updateToFalse = Arrays.asList(toFalse);
+		/*List<String> updateToFalse = Arrays.asList(toFalse);
 		helper.updateJudgement(updateToFalse, false);
 		helper.updateScore(updateToFalse, 0);
-		System.out.println("Mission Complete!");
+		System.out.println("Mission Complete!");*/
+		helper.exportResult("select distinct(trim(  submitted_answer)) from submitanswer\n" + 
+				"where is_correct = 1 and exercise_id = 13" );
+		System.out.println("Mission Completed!");
 		
         
     }

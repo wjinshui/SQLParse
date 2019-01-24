@@ -1,13 +1,13 @@
+Who have directed at least two movies that were written by themselves (i.e., a director is one of the writers for the same movie)? Show their ids, the ﬁrst and last names.
+
 select pwd.id, pwd.first_name, pwd.last_name from (person p natural join writer natural join director) as pwd group by pwd.id having count(*) >= 2;
 select a.id, a.first_name, a.last_name from (person natural join director natural join writer) as a group by a.id having count(*) > 1;
+select id, first_name, last_name from (person natural join director natural join writer) group by id,first_name,last_name having count(*) > 1;
 select p.id,p.first_name,p.last_name from person as p, director as d, writer as w where p.id=d.id and w.id=p.id and d.title=w.title and d.production_year=w.production_year group by p.id having count(*)>1;
 select p.id, p.first_name,p.last_name from person as p where p.id in(select director.id from writer, director where writer.title=director.title and writer.id = director.id group by writer.id having(count(*))>=2);
-select id, first_name, last_name from person natural join director natural join writer group by id having count(*)>1;
-select id, first_name, last_name from (person natural join director natural join writer) group by id,first_name,last_name having count(*) > 1;
-select d.id, p.first_name, p.last_name from person p, director d, writer w where p.id=d.id and d.id=w.id and d.title=w.title and d.production_year=w.production_year group by d.id having count(*)>=2;
-select id, first_name, last_name from (person p natural join director natural join writer) as dw group by dw.id having count(*) > 1;
-select id, first_name, last_name from person where id in( select d.id from director d natural join writer w group by d.id having count(*) > 1);
 select p.id,p.first_name,p.last_name from person p, director d, movie m,writer w where d.title=m.title and d.production_year=m.production_year and d.id=w.id and d.id=p.id group by p.id,p.first_name,p.last_name having count(m.title)>2;
+select d.id, p.first_name, p.last_name from person p, director d, writer w where p.id=d.id and d.id=w.id and d.title=w.title and d.production_year=w.production_year group by d.id having count(*)>=2;
+select id, first_name, last_name from person where id in( select d.id from director d natural join writer w group by d.id having count(*) > 1);
 select hehe.id,hehe.first_name,hehe.last_name from (writer w inner join director d on w.id =d.id and w.title = d.title and w.production_year = d.production_year inner join person p on d.id = p.id) as hehe group by hehe.id having count(*) > 1;
 select dw.id, dw.first_name, dw.last_name from (person p natural join director d natural join writer w) as dw group by dw.id having count(dw.id) > 1;
 select id,first_name,last_name from person where id in(select id from (select * from person natural join director natural join writer) as xyz group by id having count(title)>1);
@@ -388,5 +388,3 @@ select p.id,p.first_name,p.last_name from person p, director d, writer w where p
 select id, first_name, last_name from person where id in ( select d.id from director d,writer w where d.title = w.title and d.id = w.id group by d.id having count(*)>=2);
 select dw.id, dw.first_name, dw.last_name from( person p natural join director d natural join writer w) as dw group by dw.id having count(*)>1;
 select dw.id, dw.first_name, dw.last_name from(person p natural join director d natural join writer w)as dw group by dw.id having count(*)>1;
-select id, first_name, last_name from (person natural join director natural join writer) group by id having count(*) >1;
-

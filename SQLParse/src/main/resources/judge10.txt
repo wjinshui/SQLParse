@@ -1,6 +1,9 @@
+How many writers were born in 1935?
+
+
 select-exists:
 expression:  "select count(*) from person p where exists (select * from writer w where w.id = p.id and p.year_born = 1935);"
-disassemble:
+disassemble:d
 
 select	count(*)			 		20%
 from 	person				 		10%
