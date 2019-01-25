@@ -75,14 +75,18 @@ public class DBHelper {
 		try {
 			ResultSet rs = stmt.executeQuery(sql);			
 			StringBuffer sb = new StringBuffer();
-			Set<String> set = new HashSet<String>();			
+			Set<String> set = new HashSet<String>();
+			System.out.println("##########################");
 			while(rs.next())
 			{
 				String str = rs.getString(1).trim();
 				str = str.replaceAll("[\r\n\t]", " ").toLowerCase();
 				str=str.replaceAll(" +"," ");
 				set.add(str);
+				if(str.contains("writer") == false || str.contains("person") == false || str.contains("1935") == false)
+					System.out.println(str);
 			}
+			System.out.println("##########################");
 			for (String string : set) {
 				sb.append(string + "\n");
 			}
@@ -335,7 +339,7 @@ public class DBHelper {
 		helper.updateScore(updateToFalse, 0);
 		System.out.println("Mission Complete!");*/
 		helper.exportResult("select distinct(trim(  submitted_answer)) from submitanswer\n" + 
-				"where is_correct = 1 and exercise_id = 13" );
+				"where is_correct = 1 and exercise_id = 10" );
 		System.out.println("Mission Completed!");
 		
         
