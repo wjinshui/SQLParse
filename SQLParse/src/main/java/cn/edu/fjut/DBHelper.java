@@ -101,6 +101,7 @@ public class DBHelper {
 	 * 初始化成绩
 	 * 判断为正确为满分100，　编译不通过的０分
 	 * 包含delete的SQL只有８条，手工修改．
+	 * 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．待解决
 	 */
 	public void initialScore()
 	{
@@ -109,21 +110,24 @@ public class DBHelper {
 		List<String> ids = new ArrayList<String>();
 		try {
 			stmt.executeUpdate(sql);
-			List<ExerciseSubmission> submissions = getSubmissionWithCond(" where is_correct = 0");
+			List<ExerciseSubmission> submissions = getSubmissionWithCond(" where is_correct = 0 ");
 			for (ExerciseSubmission exerciseSubmission : submissions) {
 				System.out.format("%d / %d \n", submissions.indexOf(exerciseSubmission), submissions.size());
 				String answer = exerciseSubmission.getSubmitted_answer();	
 				// 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．
-				if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374") )
+				if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374")  )
 				{
 					System.out.println(exerciseSubmission);
 					continue;
 				}
-				if(answer.trim().length() < 18 || getAnswer(answer).size() ==0)
-				{
+				if(answer.trim().length() < 18)
 					ids.add(exerciseSubmission.getId());
-					continue;
-				}			
+				else
+					try {
+						stmt.executeQuery(answer);
+					} catch (Exception e) {
+						ids.add(exerciseSubmission.getId());
+					}						
 			}
 			System.out.println(ids.size());
 			sql = "update exercises_judgement set score = 0 where id  = ?";		
@@ -244,10 +248,8 @@ public class DBHelper {
 						row.add("NULL");
 					else
 						row.add(rs.getObject(i).toString() );					
-				}				
-				// TODO: 有些错误的sql会产生多条相同的记录，对于这种明显错误的先直接返回个空集，
-				if(result.contains(row))
-					return new HashSet<Set<String>>();
+				}			
+
 				result.add(row);
 			}
 			

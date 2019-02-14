@@ -1,53 +1,32 @@
-Question: How many writers were born in 1935?
-
-select-inner join:
 select count (distinct w.id) from writer w inner join person p on w.id = p.id where year_born = 1935;
-select count (*) as count from writer w inner join person p on w.id=p.id where p.year_born = '1935';
-
-
-select-natural join:
-select count(*) from writer w natural join person p where p.year_born = '1935';
-
-select-:
-select count (*) from writer w, person p where w.id = p.id and year_born = 1935;
-select count( *) from person, writer where person.id=writer.id and person.year_born=1935;
+select count (distinct p.id) from writer w, person p where w.id = p.id and year_born = 1935;
+select count (*) from person where exists (select * from writer where writer.id = person.id and person.year_born = 1935);
+select count(*) from ( select person.id from person natural join writer where year_born = 1935 group by person.id );
+select count(distinct p.id) from writer w natural join person p where p.year_born = '1935';
+select count(*) from person where exists (select*from writer where writer.id=person.id and person.year_born=1935);
+select count( distinct person.id) from person, writer where person.id=writer.id and person.year_born=1935;
+select count(*) from (select distinct id from writer natural join person where year_born = 1935) as p;
+select count(distinct year_born) from person p inner join writer w on p.id=w.id where year_born='1935';
+select count(m.id) from (select distinct id from writer natural join person where year_born = 1935) as m;
+select count(*) from person p where exists(select id from writer w where w.id=p.id and p.year_born='1935');
+select distinct count(*) from person where exists(select * from writer where person.year_born ='1935' and person.id = writer.id);
+select count(*) from person where exists(select * from writer where person.id = writer.id and person.year_born = 1935);
+select count (distinct p.id) as count from writer w inner join person p on w.id=p.id where p.year_born = '1935';
+select count(distinct writer.id) from writer where writer.id in (select id from person where person.year_born='1935');
+select count(*) from (select distinct id from writer natural join person where year_born = 1935);
+select count(*) from person where person.year_born =1935 and person.id in (select id from writer);
+with no as (select count(*) as no_years, year_born from person natural join writer group by year_born) select count(no_years) from no where year_born = 1935;
+select count(*) from person as p where exists( select * from writer where writer.id= p.id and p.year_born=1935);
+select count(p.id) from person as p where p.year_born = 1935 and p.id in (select w.id from writer as w);
+select distinct count(*) from writer,person where writer.id=person.id and person.year_born='1945';
 select count(distinct(person.id)) from writer, person where writer.id = person.id and person.year_born = 1935;
+select count(*) from (select distinct p.id from writer w, person p where w.id = p.id and p.year_born = '1935');
 select count(distinct writer.id) from writer,person where writer.id = person.id and year_born=1935;
 select count(a.id) from (select distinct id from writer natural join person where year_born = 1935) as a;
-
-select-exists:
-select count (*) from person where exists (select * from writer where writer.id = person.id and person.year_born = 1935);
-select count(*) from person where exists (select*from writer where writer.id=person.id and person.year_born=1935);
-select count(*) from person p where exists(select id from writer w where w.id=p.id and p.year_born='1935');
-select count(*) from person where exists(select * from writer where person.year_born ='1935' and person.id = writer.id);
-select count(*) from person where exists(select * from writer where person.id = writer.id and person.year_born = 1935);
-select count(*) from person as p where exists( select * from writer where writer.id= p.id and p.year_born=1935);
-
-
-select-from-natural join:
-select count(*) from ( select person.id from person natural join writer where year_born = 1935 group by person.id );
-select count(*) from (select distinct id from writer natural join person where year_born = 1935) as p;
-select count(m.id) from (select distinct id from writer natural join person where year_born = 1935) as m;
-select count(*) from (select distinct id from writer natural join person where year_born = 1935);
+select count(*) from (select count(*),p.id from writer as w, person as p where p.year_born ='1935' and w.id=p.id)as x;
+select count(distinct writer.id) from writer inner join person on person.id=writer.id and year_born=1935;
+select count(distinct person.id) from person inner join writer on person.id=writer.id and person.year_born='1935'; select count(distinct writer.id) from writer,person where writer.id=person.id and person.year_born='1935';
 select count(*) from( select distinct id from writer natural join person where year_born =1935 ) ;
-
-select-in:
-select count(distinct writer.id) from writer where writer.id in (select id from person where person.year_born='1935');
-select count(*) from person where person.year_born =1935 and person.id in (select id from writer);
-select count(p.id) from person as p where p.year_born = 1935 and p.id in (select w.id from writer as w);
-
-
-with-select:
-with no as (select count(*) as no_years, year_born from person natural join writer group by year_born) select count(no_years) from no where year_born = 1935;
-
-
-select-select:
-select count(*) from (select distinct p.id from writer w, person p where w.id = p.id and p.year_born = '1935');
-
-
-
-
-
 select count(distinct w.id) from writer w where w.id in (select p.id from person p where year_born = 1935);
 select count(distinct w.id) from writer w where w.id in(select id from person where person.year_born='1935');
 select count(distinct person.id) from person, writer where writer.id = person.id and person.year_born = 1935;
@@ -391,10 +370,3 @@ select count(*) from person as p where exists(select * from writer as w where w.
 select count(*) from ( select distinct person.id from person, director where person.id=director.id and person.year_born='1935');
 select count(distinct id) from (select * from person inner join writer on person.id=writer.id) as a where year_born=1935;
 
-错误解：
-select count(distinct year_born) from person p inner join writer w on p.id=w.id where year_born='1935';
-select distinct count(*) from writer,person where writer.id=person.id and person.year_born='1945';
-
-
-exception:
-select count(distinct person.id) from person inner join writer on person.id=writer.id and person.year_born='1935'; select count(distinct writer.id) from writer,person where writer.id=person.id and person.year_born='1935';

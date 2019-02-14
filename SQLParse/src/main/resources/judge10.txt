@@ -2,7 +2,7 @@ How many writers were born in 1935?
 
 
 select-exists:
-expression:  "select count(*) from person p where exists (select * from writer w where w.id = p.id and p.year_born = 1935);"
+expression:  "select count(*) from person  where exists (select * from writer  where writer.id = person.id and person.year_born = 1935);"
 disassemble:d
 
 select	count(*)			 		20%
@@ -19,7 +19,7 @@ where
 	)
 
 with-select:
-expression:  "with writer_1935 as (select distinct w.id from person p natural join writer w where year_born = '1935') select count(*) from writer_1935;"
+expression:  "with writer_1935 as (select distinct writer.id from person  natural join writer  where year_born = '1935') select count(*) from writer_1935;"
 disassemble:
 
 with writer_1935									10% 

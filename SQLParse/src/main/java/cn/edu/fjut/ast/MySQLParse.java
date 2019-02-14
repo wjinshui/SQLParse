@@ -172,6 +172,7 @@ public class MySQLParse {
 		MySqlSchemaStatVisitor visitor = sqlParse.getVisitor(sql);
 		System.out.println(visitor.getTables());
 		System.out.println(visitor.getColumns());
+		System.out.println(visitor.getGroupByColumns());
 		
 		
 

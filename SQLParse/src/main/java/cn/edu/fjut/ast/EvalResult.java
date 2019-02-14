@@ -19,7 +19,7 @@ public class EvalResult {
 	HashMap<Integer, Set<Set<String>>> refAnswer ;
 	public EvalResult() {
 		dbHelper = DBHelper.getInstance();
-		refAnswer = dbHelper.getRefAnswer();
+		//refAnswer = dbHelper.getRefAnswer();
 	}
 	
 	public boolean evalAnswer(int id, Set<Set<String>> answer)
