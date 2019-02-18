@@ -4,42 +4,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.alibaba.druid.sql.ast.expr.SQLExprUtils;
+
+import cn.edu.fjut.util.SQLHelper;
+
 public class Test {
 
 	public static void main(String[] args) {
-		Set<Set<Object>> seta = new HashSet<Set<Object>>();
-		Set<Set<Object>> setb = new HashSet<Set<Object>>();
-		Set<Object> set1 = new HashSet<Object>() ;		
-		Set<Object> set2 = new HashSet<Object>() ;
-		Set<Object> set3 = new HashSet<Object>() ;		
-		Set<Object> set4 = new HashSet<Object>() ;
-		
-		set1.add("afd");
-		set1.add("123");
-		
-		set3.add("1234");
-		set3.add("abcde");
-		
-		set4.add("abcde");
-		set4.add("1234");
-		
-		
-		set2.add("123");
-		set2.add("afd");
-		seta.add(set1);
-		seta.add(set3);
-		seta.add(set4);
-		
-		
-		setb.add(set4);
-		setb.add(set2);
-		
-		System.out.println(seta.equals(setb));
-		
-		
-		
-		
-		
+		SQLHelper help = new SQLHelper();
+		String string = help.getFormatSQL("select first_name,last_name,title,production_year,description from person a,role b where a.id=b.id and a.id in( select a.id from person a,role b where a.id=b.id group by a.id having count(*)=(select max(cnt) from (select a.id ,count(*) cnt from person a,role b where a.id=b.id group by a.id)) );");
+		System.out.println(string);
+				
 
 	}
 

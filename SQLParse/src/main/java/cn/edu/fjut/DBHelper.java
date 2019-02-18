@@ -341,7 +341,7 @@ public class DBHelper {
 		helper.updateScore(updateToFalse, 0);
 		System.out.println("Mission Complete!");*/
 		helper.exportResult("select distinct(trim(  submitted_answer)) from submitanswer\n" + 
-				"where is_correct = 1 and exercise_id = 10" );
+				"where is_correct = 1 and exercise_id = 24" );
 		System.out.println("Mission Completed!");
 		
         
