@@ -29,9 +29,8 @@ public class DataProcess {
 					System.out.println("######################");
 					String answer = exerciseSubmission.getSubmitted_answer().trim().toLowerCase();						
 					System.out.println( answer);
-					System.out.println("*** " + exerciseSubmission.is_correct() + " **** " + exerciseSubmission.getId() + " ********");
-					MySqlSchemaStatVisitor visitor =  parse.getVisitor(answer);
-					System.out.println(visitor.getTables());	
+					System.out.println("*** " + exerciseSubmission.is_correct() + " **** " + exerciseSubmission.getId() + " ********");					
+						
 				} catch (Exception e) {
 					log.log(exerciseSubmission.getSubmitted_answer());
 					log.log("************************************************");

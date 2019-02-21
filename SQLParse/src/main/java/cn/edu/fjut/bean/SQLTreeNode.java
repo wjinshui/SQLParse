@@ -1,7 +1,10 @@
 package cn.edu.fjut.bean;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
@@ -11,30 +14,65 @@ public class SQLTreeNode {
 	public static SQLExpr ROOT = new SQLCharExpr("ROOT"); 
 	private SQLObject type;
 	private String  data;
-	private SQLTree parent;
+	private SQLTreeNode parent;	
 	private List<SQLTreeNode> children;
+	private static Set<String> keys = new HashSet<>();
 	
 	
-	public SQLTreeNode() {	
-		
-		children = new ArrayList<>();
+	
+	public SQLTreeNode getParent() {
+		return parent;
 	}
-	
+
+	public void setParent(SQLTreeNode parent) {
+		this.parent = parent;
+	}
+
 	public SQLTreeNode(String data)
-	{
-		this();
-		this.data = data;		
+	{		
+		this( new SQLCharExpr(data), data);		
 	}
 
 	public SQLTreeNode(SQLExpr type, String data) {
-		this(data);
+		data = getUnusedName(data);
+		keys.add(data);
+		this.data = data;
 		this.type = type;
-		
+		children = new ArrayList<>();		
+	}
+
+	private String getUnusedName(String data) {
+		if(keys.contains(data) == false)
+			return data;
+		char ch = ':';
+		int count = 0;
+		Iterator<String> iterator = keys.iterator();
+		while(iterator.hasNext())
+		{
+			String str = iterator.next();
+			if(str.split(":")[0].equals(data))
+				count ++;
+		}
+		data = data + ch + count;
+		return data;
 	}
 
 	public void addChild(SQLTreeNode node)
 	{
-		children.add(node);
+		addChild(node, true);
+	}
+	
+	
+	public void addChild(SQLTreeNode node, boolean isRealParent)
+	{
+		if(isRealParent)
+		{
+			children.add(node);
+			node.setParent(this);
+		}
+		//只是引用该子节点，但并不是创建者
+		else
+			children.add(node);
 	}
 	
 
@@ -54,12 +92,7 @@ public class SQLTreeNode {
 		this.data = data;
 	}
 
-	public SQLTree getParent() {
-		return parent;
-	}
-	public void setParent(SQLTree parent) {
-		this.parent = parent;
-	}
+
 	public List<SQLTreeNode> getChildren() {
 		return children;
 	}
@@ -73,7 +106,7 @@ public class SQLTreeNode {
 	
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
+		
 		return type.toString();
 	}
 	

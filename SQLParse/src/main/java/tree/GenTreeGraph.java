@@ -26,7 +26,7 @@ public class GenTreeGraph {
 
         JFrame frame = new JFrame();
         frame.getContentPane().add(applet);
-        frame.setTitle("JGraphT Adapter to JGraphX Demo");
+        frame.setTitle("Abstract Syntax Tree of SQL");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
@@ -62,6 +62,8 @@ public class GenTreeGraph {
 	private void parseTree(SQLTreeNode root, ListenableGraph<String, UnLabelEdge> g) {
 		g.addVertex(root.getData());
 		for (SQLTreeNode child : root.getChildren()) {
+			if(child == null)
+				continue;
 			g.addVertex(child.getData());
 			g.addEdge(root.getData(), child.getData());
 			if(child.hasChild())
