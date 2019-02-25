@@ -37,7 +37,7 @@ public class SQLTreeNode {
 		data = getUnusedName(data);
 		keys.add(data);
 		this.data = data;
-		this.type = type;
+		//this.type = type;
 		children = new ArrayList<>();		
 	}
 

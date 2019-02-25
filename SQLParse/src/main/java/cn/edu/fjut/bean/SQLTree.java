@@ -9,7 +9,7 @@ public class SQLTree {
 	private SQLTreeNode root;
 	private Map<String, SQLTreeNode> aliasMap ;
 	private Map<SQLTreeNode, String> nodetoAlias;
-	//private static int count = 0;
+
 	
 	public SQLTree()
 	{			

@@ -25,7 +25,23 @@ public class SQLHelper {
 		sql = "Select person.first_name ,person.last_name ,role.title ,role.production_year ,role.description  From role ,movie ,person  Where person.id  =  role.id   AND  role.title  =  movie.title    AND  role.production_year  =  movie.production_year    AND  role.id  =  (Select role.id  From role ,movie  Where role.title  =  movie.title   AND  role.production_year  =  movie.production_year     )   ";
 		sql = "select p.first_name, p.last_name, r.title, r.production_year, r.description from role r, movie m, person p where p.id = r.id and r.title = m.title and r.production_year = m.production_year and r.id = (select r2.id from role r2, movie m2 where r2.title = m2.title and r2.production_year = m2.production_year group by r2.id having count(r2.id) = (select max(uni1.work_total) from (select r1.id, count(*) as work_total from role r1, movie m1 where r1.title = m1.title and r1.production_year = m1.production_year group by r1.id) as uni1));";
 		sql = "Select person.first_name ,person.last_name ,role.title ,role.production_year ,role.description  From role ,movie ,person  Where person.id  =  role.id   AND  role.title  =  movie.title    AND  role.production_year  =  movie.production_year    AND  role.id  =  (Select role.id  From role ,movie  Where role.title  =  movie.title   AND  role.production_year  =  movie.production_year     group by role.id Having COUNT( role.id ) =  (Select MAX( (Select role.id ,COUNT( * ) From role ,movie  Where role.title  =  movie.title   AND  role.production_year  =  movie.production_year     group by role.id  ),) From (Select role.id , From role ,movie  Where role.title  =  movie.title   AND  role.production_year  =  movie.production_year     group by role.id  ) )   )   ";
-		
+		sql = "with movwritid as \n" + 
+				"(with modir as\n" + 
+				"(select movie.title,movie.production_year,id\n" + 
+				"from movie,director\n" + 
+				"where movie.title=director.title and movie.production_year=director.production_year)\n" + 
+				"\n" + 
+				"select modir.title,modir.production_year,modir.id\n" + 
+				"from modir, writer\n" + 
+				"where modir.id=writer.id and modir.title=writer.title and modir.production_year=writer.production_year)\n" + 
+				"\n" + 
+				"select t.id,t.first_name, t.last_name from(\n" + 
+				"\n" + 
+				"select person.id, person.first_name, person.last_name \n" + 
+				"from person, movwritid\n" + 
+				"where person.id=movwritid.id\n" + 
+				") as t\n" + 
+				"";
 		System.out.println(SQLHelper.getFormatSQL(sql));
 	}
 	
