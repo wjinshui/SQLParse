@@ -15,8 +15,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
+import org.apache.commons.lang3.Validate;
+
 import cn.edu.fjut.bean.ExerciseJudgement;
 import cn.edu.fjut.bean.ExerciseSubmission;
+import cn.edu.fjut.bean.RefAnswer;
+import cn.edu.fjut.bean.Validation;
 import cn.edu.fjut.util.Log;
 
 public class DBHelper {
@@ -60,6 +64,11 @@ public class DBHelper {
 		return instance;
 	}
 	
+	public ResultSet executeQuery(String sql) throws SQLException
+	{
+		return stmt.executeQuery(sql);
+	}
+	
 	public void close()
 	{
 		try {
@@ -81,10 +90,9 @@ public class DBHelper {
 			{
 				String str = rs.getString(1).trim();
 				str = str.replaceAll("[\r\n\t]", " ").toLowerCase();
-				str=str.replaceAll(" +"," ");
+				str= str.replaceAll(" +"," ");
+				str = rs.getString(2).trim() + ";" + str;
 				set.add(str);
-				if(str.contains("writer") == false || str.contains("person") == false || str.contains("1935") == false)
-					System.out.println(str);
 			}
 			System.out.println("##########################");
 			for (String string : set) {
@@ -164,6 +172,8 @@ public class DBHelper {
 		return results;
 	}
 	
+
+	
 	public void updateJudgement(List<String> updateToTrue, boolean correct)
 	{		
 		String sql;
@@ -186,6 +196,30 @@ public class DBHelper {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}		
+	}
+	
+	public void insertRefAnswer(List<RefAnswer> refAnswers) {		
+		String sql;
+		sql = "DELETE FROM refAnswer\n" + 
+				" WHERE exercise_id = "  + refAnswers.get(0).getExercise_id();		
+		try {
+			stmt.executeUpdate(sql);
+			sql ="INSERT INTO refAnswer(exercise_id, id, answer)\n" + 
+					"    VALUES (?, ?, ?); ";
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (RefAnswer refAnswer : refAnswers) {
+				ps.setInt(1, refAnswer.getExercise_id());
+				ps.setInt(2, refAnswer.getId());
+				ps.setString(3, refAnswer.getAnswer());
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			conn.commit();
+			conn.setAutoCommit(true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void updateScore(List<String> updateToTrue, float score)
@@ -262,7 +296,8 @@ public class DBHelper {
 	
 
 
-	/**用于获取参考执行答案sql得到的查询结果，这样考生答案就可以跟这个查询结果进行直接对比．
+	/**用于获取参考执行答案sql得到的查询结果，每个题目都有一个标准答案执行结果．
+	 * 这样考生答案就可以跟这个查询结果进行直接对比．
 	 * @return
 	 */
 	public HashMap<Integer, Set<Set<String>>> getRefAnswer()
@@ -309,6 +344,41 @@ public class DBHelper {
 		return results;
 	}
 	
+	public List<Validation> getValidation()
+	{
+		List<Validation> result = new ArrayList<>();
+		String sql = "select exercise_id, requirTables, requireCondition from validation";
+		try {
+			ResultSet rs = stmt.executeQuery(sql);
+			while(rs.next())
+			{
+				Validation validation = new Validation(rs.getInt(1));
+				validation.setTables(rs.getString(2));
+				validation.setCondition(rs.getString(3));
+				result.add(validation);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public List<RefAnswer> getAllRefAnswer(int exercise_id) {
+		List<RefAnswer> refAnswers = new ArrayList<>();
+		String sql = "select id, answer  from refAnswer where exercise_id = " + exercise_id;
+		try {
+			ResultSet rs = stmt.executeQuery(sql);
+			while(rs.next())
+			{
+				RefAnswer refAnswer = new RefAnswer(exercise_id	, rs.getInt(1), rs.getString(2));
+				refAnswers.add(refAnswer);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return refAnswers;
+	}
+	
 	public List<ExerciseSubmission> getAllSubmission()
 	{
 		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();
@@ -335,13 +405,13 @@ public class DBHelper {
 	public static void main(String []args) {
 		
 		DBHelper helper = DBHelper.getInstance();
-		String[] toFalse = new String[] {"917","1569"};
+		
 		/*List<String> updateToFalse = Arrays.asList(toFalse);
 		helper.updateJudgement(updateToFalse, false);
 		helper.updateScore(updateToFalse, 0);
 		System.out.println("Mission Complete!");*/
-		helper.exportResult("select distinct(trim(  submitted_answer)) from submitanswer\n" + 
-				"where is_correct = 1 and exercise_id = 24" );
+		helper.exportResult("select distinct(trim(  submitted_answer)), exercisesubmission_ptr_id from submitanswer\n" + 
+				"where is_correct = 1 and exercise_id = 10" );
 		System.out.println("Mission Completed!");
 		
         
@@ -361,5 +431,19 @@ public class DBHelper {
 		}
 		return result;
 	}
+
+	public void executeUpdate(String sql) {
+		try {
+			stmt.executeUpdate(sql);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+
+
+
 
 }

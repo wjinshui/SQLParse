@@ -19,7 +19,7 @@ public class EvalResult {
 	HashMap<Integer, Set<Set<String>>> refAnswer ;
 	public EvalResult() {
 		dbHelper = DBHelper.getInstance();
-		//refAnswer = dbHelper.getRefAnswer();
+		refAnswer = dbHelper.getRefAnswer();
 	}
 	
 	public boolean evalAnswer(int id, Set<Set<String>> answer)
@@ -28,14 +28,24 @@ public class EvalResult {
 		return correct.equals(answer);
 	}
 	
+	/**
+	 * 将所有执行会抛异常的SQL设置为０
+	 * @param exercise_id
+	 */
+	private void setAllUnExecutableToZero(int exercise_id)
+	{
+		
+	}
 	
 	public static void main(String[] args) {		
 		EvalResult evalResult = new EvalResult();		
-		evalResult.dbHelper.initialScore();
+		//evalResult.dbHelper.initialScore();
+		evalResult.evalExercise(10);
 	}
 	
 	/**对指定题进行改题，　依据是对比输入sql与答案sql是否相似进行
 	 * 需注意的是，输入sql可能会包含delete语句，从而影响数据库中的数据，因此在代码中删除跳过包含delete语句的sql
+	 * 因此，执行这个方法可以快速找出判分正确且结果错误，以及判分错误且结果正确的记录．
 	 * @param exerciseID 
 	 */
 	public void evalExercise(int exerciseID)
@@ -71,8 +81,8 @@ public class EvalResult {
 			System.out.println(id);
 		}
 		
-		dbHelper.updateJudgement(updateToTrue, true);
-		dbHelper.updateJudgement(updateToFalse, false);
+		//dbHelper.updateJudgement(updateToTrue, true);
+		//dbHelper.updateJudgement(updateToFalse, false);
 		
 	}
 

@@ -66,6 +66,9 @@ public class GenTreeGraph {
 				continue;
 			g.addVertex(child.getData());
 			g.addEdge(root.getData(), child.getData());
+			
+			
+			System.out.println(child.getData());
 			if(child.hasChild())
 				parseTree(child,g);
 		}		

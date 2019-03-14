@@ -1,35 +1,56 @@
 package cn.edu.fjut;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.awt.print.Printable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
-import com.alibaba.druid.sql.ast.expr.SQLExprUtils;
+import com.alibaba.druid.sql.visitor.SQLEvalVisitorUtils;
+import com.alibaba.druid.util.JdbcConstants;
 
-import cn.edu.fjut.util.SQLHelper;
+import cn.edu.fjut.ast.MySQLParse;
+import cn.edu.fjut.bean.SQLTree;
+import cn.edu.fjut.bean.SQLTreeNode;
 
 public class Test {
 
-	public static void main(String[] args) {
-		SQLHelper help = new SQLHelper();
-		String string = help.getFormatSQL("select first_name,last_name,title,production_year,description from person a,role b where a.id=b.id and a.id in( select a.id from person a,role b where a.id=b.id group by a.id having count(*)=(select max(cnt) from (select a.id ,count(*) cnt from person a,role b where a.id=b.id group by a.id)) );");
-		System.out.println(string);
-				
+	  public static void main(String[] args) {
+		  
+		  
+	        List<Integer> list1 = new ArrayList<>();
+	        list1.add(0);
+	        list1.add(1);
+	        list1.add(2);
+	        List<Integer> list2 = new ArrayList<>();
+	        list2.add(3);
+	        list2.add(4);
+	        list2.add(5);
 
-	}
+	        List<List<Integer>> allList = new ArrayList<>();
+	        allList.add(list1);
+	        allList.add(list2);
 
-	private static void equalHashMap() {
-		HashMap<Integer, Integer> test1 = new HashMap<Integer, Integer>();
-		HashMap<Integer, Integer> test2 = new HashMap<Integer, Integer>();
-		test1.put(1, 10);
-		test1.put(2, 20);
-		test1.put(3, 30);
-		
-		test2.put(3, 30);
-		test2.put(1, 10);
-		test2.put(2, 20);
-		
-		System.out.println(test1.equals(test2));
-	}
+//	        calculateCombination(allList, 0, new int[allList.size()]);  
+	    }
+	
+	
+	/** * 写法二，递归计算所有组合 * @param inputList 所有数组的列表，数组用List<Integer>存储 * @param beginIndex 代表每一个数组的在inputList中的索引 * @param arr 用于保存每一次递归生成的组合 * */
+    public static void  calculateCombination(List<List<Integer>> inputList, int beginIndex, int[] arr) {
+        if(beginIndex == inputList.size()){
+            //在这里进行你自己的处理，比如打印组合的结果
+            for (int i : arr) {
+                System.out.print(i+", ");
+            }
+            System.out.println();
+            return;
+        }
+        for(int c: inputList.get(beginIndex)){
+            arr[beginIndex] = c;
+            calculateCombination(inputList, beginIndex + 1, arr);
+        }
+    }
+
+
 
 }

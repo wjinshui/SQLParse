@@ -4,10 +4,19 @@ public class ExerciseSubmission {
 
 	private String id, submitted_answer, ref_answer, exercise_id;
 	private boolean is_correct;
+	private float score = 0;
 	
 	
 
 	
+
+	public float getScore() {
+		return score;
+	}
+
+	public void setScore(float score) {
+		this.score = score;
+	}
 
 	public boolean is_correct() {
 		return is_correct;

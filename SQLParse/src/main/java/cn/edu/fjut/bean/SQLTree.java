@@ -2,12 +2,18 @@ package cn.edu.fjut.bean;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * @author admin-u1064462
+ *
+ */
 public class SQLTree {
 	private SQLTreeNode root;
-	private Map<String, SQLTreeNode> aliasMap ;
+	private Map<String, SQLTreeNode> aliasMap ;	
 	private Map<SQLTreeNode, String> nodetoAlias;
 
 	
@@ -16,6 +22,7 @@ public class SQLTree {
 		root = new SQLTreeNode(SQLTreeNode.ROOT, "ROOT") ;
 		aliasMap = new HashMap<>();
 		nodetoAlias= new HashMap<>();
+ 		SQLTreeNode.initialKeys();
 	}
 
 	public SQLTreeNode getRoot() {
@@ -38,16 +45,72 @@ public class SQLTree {
 		return aliasMap.get(key);
 	}
 	
-	public List<SQLTreeNode> getLeafs()
+	/**获得被重复访问的节点
+	 * @return
+	 */
+	public List<String> getMulitiVisitNodes()
 	{
-		List<SQLTreeNode> leafs = new ArrayList<>();
-		collectLeaf(leafs, root);
-		return leafs;
+		List<SQLTreeNode> multiVisitedNodes = new ArrayList<>();
+		List<SQLTreeNode> visitedNodes = new ArrayList<>();
+		getNodeVisitTimes(root,multiVisitedNodes, visitedNodes);
+		List<String> result = new ArrayList<>();
+		for (SQLTreeNode sqlTreeNode : multiVisitedNodes) {				
+			result.add( sqlTreeNode.getSimpleData());		
+		}
+		return result;
+	}
+	
+
+
+	private void getNodeVisitTimes(SQLTreeNode node, List<SQLTreeNode> multiVisitedNodes,
+			List<SQLTreeNode> visitedNodes) {
+		if(visitedNodes.contains(node))
+		{
+			multiVisitedNodes.add(node);
+			return;
+		}
+		else
+			visitedNodes.add(node);
+		for (SQLTreeNode sqlTreeNode : node.getChildren()) {
+			getNodeVisitTimes(sqlTreeNode, multiVisitedNodes, visitedNodes);
+		}
+		
 	}
 
-	private void collectLeaf(List<SQLTreeNode> leafs, SQLTreeNode root) {
+
+	
+	
+	/** 
+	 * 用于获得叶子节点，由于可能存在多父节点，因此使用Set而不是List，以避免叶子节点被重复计算．
+	 * @return
+	 */
+	public List<String> getLeafs()
+	{
+		Set<SQLTreeNode> leafs = new HashSet<>();
+		collectLeaf(leafs, root);
+		List<String> result = new ArrayList<>();
+		for (SQLTreeNode sqlTreeNode : leafs) {			
+			result.add(sqlTreeNode.getSimpleData());
+		}
+		return result;
+	}
+	
+	/**
+	 * 需要返回两组节点之和，一个是所有的叶子节点，一个是所有被重复连接的节点．
+	 * @return
+	 */
+	public List<String> getResultNodes()
+	{
+		List<String> result = getLeafs();
+		result.addAll(getMulitiVisitNodes());
+		return result;
+	}
+	
+
+
+	private void collectLeaf(Set<SQLTreeNode> leafs, SQLTreeNode root) {
 		if(root.getChildren().size() > 0)
-			for (SQLTreeNode sqlTreeNode : leafs) {
+			for (SQLTreeNode sqlTreeNode : root.getChildren()) {
 				collectLeaf(leafs, sqlTreeNode);
 			}
 		else
