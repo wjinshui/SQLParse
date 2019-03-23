@@ -12,7 +12,7 @@ public class SQLHelper {
 		sql = "SELECT COUNT(*) FROM (writer_award wa     NATURAL JOIN person) AS pr, writer wr WHERE pr.title = wr.title     AND pr.production_year = wr.production_year     AND lower(pr.first_name) = 'woody'     AND lower(pr.last_name) = 'allen'     AND pr.year_of_award <= 1995     AND pr.year_of_award >= 1991     AND lower(pr.result) = 'won'; ";
 		sql = "select first_name, last_name, title, production_year, description from role natural join person where id = ( select id from role natural join person group by id having count(*) = ( select max(cnt) from ( select count(*) as cnt from role group by id ) ) ) ;";
 		sql = "select p.first_name,p.last_name, r.title, r.production_year, r.description from person p ,role r where r.id=p.id and p.id = (select id from (select id,count(*) as c from role group by id) where c= (select max(c) from (select id,count(*) as c from role group by id)));";
-		sql = "with cou as ( select id, count(*) as numberofrole from role group by id) select p.first_name, p.last_name, r.title, r.production_year, r.description from person p, role r, cou b where r.id = p.id and p.id = b.id and b.numberofrole in ( select max(a.numberofrole) from cou a);";	
+		sql = "select production_year, count(title) from movie where production_year = 1993 group by production_year union select production_year, count(title) from movie where production_year = 1992 group by production_year union select production_year, count(title) from movie where production_year = 1991 group by production_year;;";	
 
 		System.out.println(SQLHelper.getFormatSQL(sql));
 	}

@@ -1,5 +1,10 @@
 package cn.edu.fjut.bean;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +16,12 @@ import java.util.Set;
  * @author admin-u1064462
  *
  */
-public class SQLTree {
+public class SQLTree implements Serializable 
+{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8042021062345942273L;
 	private SQLTreeNode root;
 	private Map<String, SQLTreeNode> aliasMap ;	
 	private Map<SQLTreeNode, String> nodetoAlias;
@@ -23,6 +33,26 @@ public class SQLTree {
 		aliasMap = new HashMap<>();
 		nodetoAlias= new HashMap<>();
  		SQLTreeNode.initialKeys();
+	}
+
+	public SQLTree deepCopy()
+	{
+		SQLTree newTree = null;
+		try
+		{
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			oos.writeObject(this);
+			ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+			ObjectInputStream ois = new ObjectInputStream(bis);
+			newTree = (SQLTree)ois.readObject();
+			
+		} catch (Exception e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return newTree;
 	}
 
 	public SQLTreeNode getRoot() {
@@ -131,6 +161,8 @@ public class SQLTree {
 			name = name.split(":")[0];
 		return name;
 	}
+	
+	//修改了getParent，使得现在的node可以有多个parent,原来的方法暂时不可用了．
 	private String travelNode(SQLTreeNode parent,  SQLTreeNode cur) {		
 		String result = "";
 		
@@ -186,15 +218,12 @@ public class SQLTree {
 					if(nodetoAlias.get(cur) != null)
 						result = result + " as " + nodetoAlias.get(cur);
 				}
-
-				
 				break;
 			case "Having":
 				result = result +  nodeName + " ";
 				result = result + travelNode(cur, cur.getChildren(), " ");
 				break;
-			default:
-				//travelNode(sb, node.getChildren(), " ");
+			default:				
 				break;
 			}			
 		}
@@ -227,5 +256,33 @@ public class SQLTree {
 				curNode.add(0, selectNode);				
 			}
 		}		
+	}
+
+	public int getNodeCount()
+	{
+		Set<String> visitedNodes = new HashSet<>();
+		visitTree(root, visitedNodes, false);
+		return visitedNodes.size();
+	}
+	
+	public Set<String> getNodes(boolean ignoreOrderBy)
+	{
+		Set<String> visitedNodes = new HashSet<>();
+		visitTree(root, visitedNodes, ignoreOrderBy);
+		return visitedNodes;
+	}	
+	
+
+	private void visitTree(SQLTreeNode node, Set<String> visitedNodes, boolean ignoreOrderBy)
+	{		
+		if(ignoreOrderBy && node.getSimpleData().equals("OrderBy"))
+			return;
+		if(node.isTempNode() == false)			
+			visitedNodes.add(node.getData());
+		for (SQLTreeNode child : node.getChildren())
+		{
+			visitTree(child, visitedNodes, ignoreOrderBy);
+		}
+		
 	}
 }

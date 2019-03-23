@@ -40,7 +40,7 @@ public class EvalResult {
 	public static void main(String[] args) {		
 		EvalResult evalResult = new EvalResult();		
 		//evalResult.dbHelper.initialScore();
-		evalResult.evalExercise(10);
+		evalResult.evalExercise(11);
 	}
 	
 	/**对指定题进行改题，　依据是对比输入sql与答案sql是否相似进行

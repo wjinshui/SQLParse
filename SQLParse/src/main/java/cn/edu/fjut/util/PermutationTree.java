@@ -26,8 +26,23 @@ public class PermutationTree<T>
 		list2.add("3");
 		list2.add("4");
 		PermutationTree<String> tree = new PermutationTree<>(list1, list2);		
-		List<PermutationTreeNode> pathNodes = new ArrayList<>();
-		tree.travelTree(tree.root, pathNodes);
+		List<PermutationTreeNode<String>> pathNodes = new ArrayList<>();
+		List<List<List<PermutationTreeNode<String>>>>  pairRsult = tree.travelTree(tree.root, pathNodes);
+		System.out.println("************");
+		for (List<List<PermutationTreeNode<String>>> pairs : pairRsult)
+		{
+			for (List<PermutationTreeNode<String>> pair : pairs)
+			{
+				
+				for (PermutationTreeNode<String> data : pair)
+				{
+					System.out.print(data.getData() + ",");
+				}
+				
+			}
+			System.out.println();
+		}
+		
 	}
 	
 	List<T> listA, listB;	
@@ -40,26 +55,6 @@ public class PermutationTree<T>
 		initial();
 	}
 	
-	/**
-	 * 用来构建树
-	 * @param node
-	 * @param curDataList
-	 * @param childDataList
-	 */
-	private void buildTree(PermutationTreeNode<T> node, List<T> curDataList, List<T> childDataList)
-	{
-		for (PermutationTreeNode<T> child : node.getChildren())
-		{
-			T data = child.getData();			
-			LinkedList<T> temp = new LinkedList<>(childDataList);
-			temp.remove(data);
-			child.setChildren(curDataList);
-			buildTree(child, temp, curDataList);
-			
-		}
-		
-	}
-
 	private void initial()
 	{
 		if(listA.size() == 0 || listB.size() ==0)
@@ -68,15 +63,41 @@ public class PermutationTree<T>
 		root = new PermutationTreeNode<T>(temp.pop());		
 		root.setChildren(listB);
 		buildTree(root, temp, listB);
-		
+		pairResult = new ArrayList<>();
 		
 	}
 	
-	private void printList(List<PermutationTreeNode> list)
+	/**
+	 * 用来构建树
+	 * @param node
+	 * @param firstList
+	 * @param secondList
+	 */
+	private void buildTree(PermutationTreeNode<T> node, LinkedList<T> firstList, List<T> secondList)
+	{
+		
+		T first = firstList.pop();
+		for (PermutationTreeNode<T> child : node.getChildren())
+		{
+			PermutationTreeNode<T> markNode = new PermutationTreeNode<T>(first);
+			child.addChild(markNode);			
+			T data = child.getData();
+			LinkedList<T> temp = new LinkedList<>(secondList);
+			temp.remove(data); 			
+			markNode.setChildren(temp);
+			if(firstList.isEmpty() == false)
+				buildTree(markNode, new LinkedList<T>(firstList), temp);			
+		}
+		
+	}
+
+
+	
+	private void printList(List<PermutationTreeNode<T>> list)
 	{
 		for (int i = 0; i < list.size(); i++)
 		{
-			PermutationTreeNode node = list.get(i);
+			PermutationTreeNode<T> node = list.get(i);
 			if(i == list.size() -1)
 			{
 				System.out.print(node.getData());
@@ -87,19 +108,46 @@ public class PermutationTree<T>
 			else
 				System.out.print(node.getData() + " -> ");			
 		}
-		System.out.println();
-				
-		
+		System.out.println();		
 	}
-
-	public void travelTree(PermutationTreeNode<T> node, List<PermutationTreeNode> pathNodes)
+	
+	public  List<List<PermutationTreeNode<T>>> getPairResult(List<PermutationTreeNode<T>> list)
 	{
-		List<PermutationTreeNode> list = new ArrayList<>(pathNodes);
+		List<List<PermutationTreeNode<T>>> result = new ArrayList<>();
+		List<PermutationTreeNode<T>> pair = null;
+		for(int i=0;i< list.size(); i++)
+		{
+			PermutationTreeNode<T> node = list.get(i);			
+			if(i == list.size() -1)
+			{
+				pair.add(node);
+				result.add(pair);
+				break;
+			}
+				
+			if(i % 2 == 0)
+			{
+				pair = new ArrayList<>();
+				pair.add(node);
+			}
+			else
+			{
+				pair.add(node);
+				result.add(pair);
+			}
+		}
+		return result;
+	}
+	List<List<List<PermutationTreeNode<T>>>> pairResult;
+	public List<List<List<PermutationTreeNode<T>>>>  travelTree(PermutationTreeNode<T> node, List<PermutationTreeNode<T>> pathNodes)
+	{
+		List<PermutationTreeNode<T>> list = new ArrayList<>(pathNodes);		 
 		list.add(node);
 		//已经到了叶子节点了．．
 		if(node.getChildren().size() == 0)
 		{
-			printList(list);			
+			printList(list);		
+			pairResult.add( getPairResult(list));
 		}
 		else
 		{
@@ -108,7 +156,7 @@ public class PermutationTree<T>
 				travelTree(child, list);
 			}
 		}
-		
+		return pairResult;
 	}
 }
 
@@ -124,6 +172,19 @@ class PermutationTreeNode<T>
 	}
 
 	
+
+
+
+	public void addChild(PermutationTreeNode<T> child)
+	{
+		children.add(child);
+		
+	}
+
+
+
+
+
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -150,6 +211,12 @@ class PermutationTreeNode<T>
 		return getData().hashCode();
 	}
 
+	public PermutationTreeNode<T> setChild(T child)
+	{
+		PermutationTreeNode<T> node = new PermutationTreeNode<T>(child);
+		children.add(node);
+		return node;
+	}
 
 	public void setChildren(List<T> listB)
 	{

@@ -15,11 +15,12 @@ import cn.edu.fjut.util.Log;
 public class EvalLogCorrect {
 	public static void main(String[] args) {
 		Log log = new Log(false);
-		int exercise_id = 10;
+		int exercise_id = 1１;
 		List<String> sqls = log.getContent();
 		DBHelper dbHelper = DBHelper.getInstance();
 		EvalResult evalResult = new EvalResult();
 		boolean result = true;
+		//用来再次确认规范化之后的sql还是可以得到准确解
 		for (String sql : sqls) {
 			if(sql.split(";").length ==1)
 				continue;

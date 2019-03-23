@@ -1,37 +1,13 @@
 package cn.edu.fjut;
 
-import java.awt.print.Printable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-
-import com.alibaba.druid.sql.visitor.SQLEvalVisitorUtils;
-import com.alibaba.druid.util.JdbcConstants;
-
-import cn.edu.fjut.ast.MySQLParse;
-import cn.edu.fjut.bean.SQLTree;
-import cn.edu.fjut.bean.SQLTreeNode;
 
 public class Test {
 
 	  public static void main(String[] args) {
+		  String str = "8929;select production_year, count(*) from movie where; production_year > 1990 and production_year < 1994 group by production_year;";
+		  System.out.println(str.matches("^\\d*;[\\S\\s]+;[\\S\\s]+;$"));
 		  
-		  
-	        List<Integer> list1 = new ArrayList<>();
-	        list1.add(0);
-	        list1.add(1);
-	        list1.add(2);
-	        List<Integer> list2 = new ArrayList<>();
-	        list2.add(3);
-	        list2.add(4);
-	        list2.add(5);
-
-	        List<List<Integer>> allList = new ArrayList<>();
-	        allList.add(list1);
-	        allList.add(list2);
-
-//	        calculateCombination(allList, 0, new int[allList.size()]);  
 	    }
 	
 	

@@ -1,5 +1,6 @@
 package cn.edu.fjut.bean;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,11 +12,19 @@ import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 
-public class SQLTreeNode {
+public class SQLTreeNode implements Serializable 
+{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6205815808743619432L;
 	//"WithSubSequery"和"WithEntry"被抽取出来，因为需要"WithSubSequery"来提示之后会跟着若干个"WithEntry",而"WithEntry"则是用来将一些Sequery包装起来．
-	private static final String[] TempNodes = {"SubSelect", "INNER_JOIN","BinaryOp","MethodInvoke" ,  "UnionQuery", "On","Left", "Right", 
-			"UnionQuery","InList","List", "InSubQuery",
+	// Join类型不能删，是一个用来区别的很重要指标．例如3700和２１４０的区别：
+	// 3700:select count(distinct p.id) from person p inner join writer w where p.year_born = 1935;  
+	// 2140:select count(distinct id) from person p natural join writer w where p.year_born = 1935
+	private static final String[] TempNodes = {"ROOT", "SubSelect",  "BinaryOp","MethodInvoke" ,  "UnionQuery", "On","Left", "Right", 
+			"UnionQuery","InList","List", "InSubQuery", 
 			"BetweenOper","Range","NotExpr","Function" };
 	private static List<String> tempNodeList;
 	public static SQLExpr ROOT = new SQLCharExpr("ROOT"); 
@@ -49,6 +58,34 @@ public class SQLTreeNode {
 	{
 		return data.split(":")[0];
 	}
+	
+	public void removeNodeFromTree(String data)
+	{
+		SQLTreeNode root = getRoot();
+		removeNode(root.getChildren(), data);
+	}
+
+	private void removeNode(List<SQLTreeNode> nodes, String data)
+	{
+		for(int i =0; i< nodes.size(); i++)
+			if( nodes.get(i).getData().equals(data))
+			{
+				nodes.remove(i);
+				return;
+			}
+			else {
+				removeNode(nodes.get(i).getChildren(), data);
+			}
+		
+	}
+
+	private SQLTreeNode getRoot()
+	{
+		if(getData().equals("ROOT"))
+			return this;
+		else
+			return getParent().getRoot();
+	}
 
 	public SQLTreeNode(SQLExpr type, String data) {
 		data = getUnusedName(data);
@@ -59,6 +96,9 @@ public class SQLTreeNode {
 	}
 
 	private String getUnusedName(String data) {
+		//　当前数据集中'1991'与1991等价，为了避免后续比较出错，因此需要将'1991'转换为1991
+		if( data.matches("^'[0-9]*'$"))			
+				data = data.substring(1, data.length() -1);
 		if(keys.contains(data) == false)
 			return data;
 		char ch = ':';
@@ -90,6 +130,7 @@ public class SQLTreeNode {
 		//只是引用该子节点，但并不是创建者
 		else
 			children.add(node);
+		node.setParent(this);
 	}
 	
 
@@ -106,7 +147,10 @@ public class SQLTreeNode {
 	}
 
 	public void setData(String data) {
+		String oldData = this.getData();
 		this.data = getUnusedName(data);
+		keys.remove(oldData);
+		keys.add(this.data);
 	}
 
 
@@ -128,8 +172,8 @@ public class SQLTreeNode {
 		for (SQLTreeNode sqlTreeNode : children) {
 			if(sqlTreeNode.getSimpleData().equals("UnionQuery"))
 			{
-				//result.addAll(sqlTreeNode.getChildrenWithoutTempNode());
-				//TODO: UnionQuery是个很麻烦的事．．
+				result.addAll(sqlTreeNode.getChildrenWithoutTempNode());
+				
 			}
 			
 			else if(tempNodeList.contains(sqlTreeNode.getSimpleData()))
@@ -164,6 +208,12 @@ public class SQLTreeNode {
 	@Override
 	public String toString() {		
 		return data;
+	}
+
+	public boolean isTempNode()
+	{
+		return tempNodeList.contains(this.getSimpleData());
+		
 	}
 	
 	

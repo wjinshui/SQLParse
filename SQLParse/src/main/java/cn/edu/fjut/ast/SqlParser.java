@@ -29,23 +29,30 @@ public class SqlParser {
 	private static void pareAll() {
 		DBHelper helper = DBHelper.getInstance();
 		List<ExerciseSubmission> submissions = helper
-				.getSubmissionWithCond(" where exercise_id = 10 and is_correct =1");
+				.getSubmissionWithCond(" where exercise_id = 11 and is_correct =1");
 		List<Validation> validations = helper.getValidation();
 		Validation validation = validations.get(0);
 		System.out.println(validation);
-		for (ExerciseSubmission exerciseSubmission : submissions) {
-			String sql = exerciseSubmission.getSubmitted_answer();
+		for (ExerciseSubmission exerciseSubmission : submissions) {			
+			String sql = exerciseSubmission.getSubmitted_answer();			
 			MySqlStatementParser parser = new MySqlStatementParser(sql);
 			SQLStatement sqlStatement = parser.parseStatement();
 			SQLSchemaStatVisitor visitor = new SQLSchemaStatVisitor();
-			sqlStatement.accept(visitor);
-			boolean result = validateVisitor(visitor, validation);
-			if (result == false) {
-				System.out.println(exerciseSubmission.getId() + " " + sql);
-				System.out.println("getTables:" + visitor.getTables());
-				System.out.println("getParameters:" + visitor.getParameters());
-				System.out.println("condition:" + visitor.getConditions());
+			try
+			{
+				sqlStatement.accept(visitor);
+				boolean result = validateVisitor(visitor, validation);
+				if (result == false) {
+					System.out.println(exerciseSubmission.getId() + " " + sql);
+					System.out.println("getTables:" + visitor.getTables());
+					System.out.println("getParameters:" + visitor.getParameters());
+					System.out.println("condition:" + visitor.getConditions());
+				}
+			} catch (Exception e)
+			{
+				System.out.println(sql);
 			}
+			
 		}
 	}
 
@@ -93,7 +100,7 @@ public class SqlParser {
 
 	public static void updateValidation() {
 		String sql;
-		sql = "insert into validation ( exercise_id, requirTables, requireCondition) VALUES (10, 'person, writer', '1935');\n";
+		sql = "insert into validation ( exercise_id, requirTables, requireCondition) VALUES (11, 'movie', '1935');\n";
 		DBHelper helper = DBHelper.getInstance();
 		helper.executeUpdate(sql);
 

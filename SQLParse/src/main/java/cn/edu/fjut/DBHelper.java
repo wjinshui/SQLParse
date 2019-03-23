@@ -85,7 +85,6 @@ public class DBHelper {
 			ResultSet rs = stmt.executeQuery(sql);			
 			StringBuffer sb = new StringBuffer();
 			Set<String> set = new HashSet<String>();
-			System.out.println("##########################");
 			while(rs.next())
 			{
 				String str = rs.getString(1).trim();
@@ -93,9 +92,10 @@ public class DBHelper {
 				str= str.replaceAll(" +"," ");
 				str = rs.getString(2).trim() + ";" + str;
 				set.add(str);
-			}
-			System.out.println("##########################");
+			}			
 			for (String string : set) {
+				if(string.matches("^\\d*;[\\S\\s]+;[\\S\\s]+;$"))
+					System.out.println(string);
 				sb.append(string + "\n");
 			}
 			Log log = new Log();
@@ -411,7 +411,7 @@ public class DBHelper {
 		helper.updateScore(updateToFalse, 0);
 		System.out.println("Mission Complete!");*/
 		helper.exportResult("select distinct(trim(  submitted_answer)), exercisesubmission_ptr_id from submitanswer\n" + 
-				"where is_correct = 1 and exercise_id = 10" );
+				"where is_correct = 1 and exercise_id = 11" );
 		System.out.println("Mission Completed!");
 		
         

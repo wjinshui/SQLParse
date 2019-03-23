@@ -1,7 +1,11 @@
 package cn.edu.fjut.ast;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.text.CaseUtils;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
@@ -14,6 +18,7 @@ import com.alibaba.druid.sql.ast.expr.SQLAggregateExpr;
 import com.alibaba.druid.sql.ast.expr.SQLAllColumnExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBetweenExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
+import com.alibaba.druid.sql.ast.expr.SQLBinaryOperator;
 import com.alibaba.druid.sql.ast.expr.SQLCastExpr;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLExistsExpr;
@@ -73,22 +78,18 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); // not
 																											// a.id的a无法引到．
 
-		String sql = "WITH oldest AS (SELECT MAX(year_born) tot FROM person),\n" + 
-				"\n" + 
-				"without_oldest AS (SELECT year_born FROM person\n" + 
-				"WHERE year_born != (SELECT * FROM oldest)),\n" + 
-				"\n" + 
-				"second_eldest AS (SELECT MAX(year_born) FROM without_oldest)\n" + 
-				"\n" + 
-				"select id FROM person\n" + 
-				"WHERE year_born = (SELECT * FROM second_eldest)\n" + 
-				"\n" + 
-				";;";
+		String sql;
+		//sql = "SELECT count(production_year) from movie WHERE production_year = 1993 or production_year = 1992 or production_year = 1991 Group by production_year;";
+		sql =  " select production_year,count (*)\n" + 
+				" from movie\n" + 
+				" where production_year<1994 and 1990 < production_year\n" + 
+				" group by production_year;";
 		boolean singlesql = true;
-		// singlesql = false;
+		//singlesql = false;
 		int begin = 0;
 		if (singlesql) {
-			singleSQL(sqlParse, sql);
+			SQLTree tree = singleSQL(sqlParse, sql);
+			System.out.println(tree.getNodeCount());
 		} else
 			travelAll(sqlParse, submissions, begin);
 	}
@@ -98,6 +99,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		String[] cannotParse = { "5390", "8138", "8256", "8311" };
 		// 由于druid问题，一些无法顺利解析的SQL语句
 		List<String> cannotParseList = Arrays.asList(cannotParse);
+		Set<String> allNodes = new HashSet<>();
 		for (int i = begin; i < submissions.size(); i++) {
 			ExerciseSubmission exerciseSubmission = submissions.get(i);
 			System.out.printf("%d / %d : %s\n", i, submissions.size(), exerciseSubmission.getId());
@@ -106,11 +108,23 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			sql = exerciseSubmission.getSubmitted_answer();
 			if (sql.toLowerCase().contains("delete"))
 				continue;
-			System.out.println(sql);
-			sqlParse.parse(sql);
-			// genTreeGraph.display(tree);
-			// System.out.println(tree.convertToSQL());
+			SQLTree tree = sqlParse.parse(sql);
+			allNodes.addAll(tree.getNodes(false));
+
 		}
+		Set<String> newSet = new HashSet<>();
+		for (String string : allNodes)
+		{
+			String name = string.split(":")[0];
+			
+			newSet.add(name);
+		}
+		System.out.println("*************");
+		for (String string : newSet)
+		{
+			System.out.println(string);
+		}
+		System.out.println("*************");
 	}
 
 	private static SQLTree singleSQL(MySQLParse sqlParse, String sql) {
@@ -214,7 +228,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			SQLTreeNode node = tree.getAlias(alias);
 			if (node == null) {
 				node = new SQLTreeNode("SubSelect");
-				parentNode.addChild(node, false);
+				parentNode.addChild(node, true);
 				parseChild(node, subquery.getSelect());
 				tree.putAlias(subquery.getAlias(), node);
 			} else {
@@ -294,7 +308,9 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		} else if (curObj instanceof SQLBinaryOpExpr) {
 			SQLBinaryOpExpr expr = (SQLBinaryOpExpr) curObj;
 			SQLTreeNode node = new SQLTreeNode(expr, "BinaryOp");
-			parentNode.addChild(node);
+			parentNode.addChild(node);			
+			//当opNode是　<, >, <=和　>=时，需要对leaf 和　right进行对齐，后面比较需要．．
+			adjustSequence(expr);
 			SQLTreeNode opNode = new SQLTreeNode(expr, expr.getOperator().getName());
 			parseChild(node, expr.getLeft());
 			node.addChild(opNode);
@@ -355,7 +371,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			SQLTreeNode node = tree.getAlias(expr.getName());
 			if (node == null)
 				node = new SQLTreeNode(expr.getName());
-			if (node.getData().contains(".") == false && expr.getResolvedTableSource() != null) {
+			if (node.getData().contains(".") == false && expr.getResolvedTableSource() != null && node.isTempNode() ==false) {
 				if (expr.getResolvedTableSource().getAlias() != null)
 					node.setData(expr.getResolvedTableSource().getAlias() + "." + node.getData());
 				else
@@ -533,12 +549,51 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			}
 			if (expr.getArguments().size() > 0)
 				parseChildren(node, expr.getArguments());
+			else if(expr.getMethodName().equals("COUNT") && expr.getArguments().size() ==0) //当count()没有参数时，需要手工加上一个*
+				parseChild(node, new SQLAllColumnExpr());
 		} else {
 			System.out.println(curObj);
 			log.log("###################################\n" + curObj.toString() + "#####################\n");
 
 		}
 
+	}
+
+	
+	/**当opNode是　<, >, <=和　>=时，需要对leaf 和　right进行对齐，后面比较需要．．
+	 * 让右边都是SQLIntegerExpr或SQLCharExpr
+	 * @param expr
+	 */
+	private void adjustSequence(SQLBinaryOpExpr expr)
+	{		
+		if(expr.getRight() instanceof SQLIntegerExpr || expr.getRight() instanceof SQLCharExpr)
+			return;
+		String opername = expr.getOperator().getName();
+		if(opername.equals("<") || opername.equals("<=") || opername.equals(">") || opername.equals(">="))
+		{
+			switch (expr.getOperator().getName())
+			{
+			case "<":
+				expr.setOperator(SQLBinaryOperator.GreaterThan);
+				break;
+			case ">":
+				expr.setOperator(SQLBinaryOperator.LessThan);
+				break;
+			case "<=":
+				expr.setOperator(SQLBinaryOperator.GreaterThanOrEqual);
+				break;
+			case ">=":
+				expr.setOperator(SQLBinaryOperator.LessThanOrEqual);
+				break;
+			default:
+				break;
+			}
+			SQLExpr expr2 = expr.getRight().clone();
+			expr.setRight(expr.getLeft());
+			expr.setLeft(expr2);
+		}
+
+		
 	}
 
 	SQLTree tree;

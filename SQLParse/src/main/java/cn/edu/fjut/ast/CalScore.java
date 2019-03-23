@@ -1,14 +1,15 @@
 package cn.edu.fjut.ast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cn.edu.fjut.DBHelper;
 import cn.edu.fjut.bean.ExerciseSubmission;
 import cn.edu.fjut.bean.RefAnswer;
 import cn.edu.fjut.bean.SQLTree;
 import cn.edu.fjut.bean.SQLTreeNode;
-import cn.edu.fjut.util.Utils;
 import tree.GenTreeGraph;
 
 /**
@@ -20,6 +21,7 @@ import tree.GenTreeGraph;
 public class CalScore
 {
 	DBHelper dbHelper = DBHelper.getInstance();
+	public static final boolean IGNORE_ORDERBY = true;
 	MySQLParse parse;
 
 	public CalScore()
@@ -43,24 +45,46 @@ public class CalScore
 		 * "SELECT count(*) FROM person p WHERE EXISTS (SELECT * FROM writer w WHERE w.id = p.id AND p.year_born = 1935);"
 		 * ; SQLTree tree2 = calScore.parse.parse(sql); calScore.calScore(tree1, tree2);
 		 */
+		//calScore.calScoreTest();
 
 	}
 
 	// with year_born as (select * from person natural join writer where year_born =
 	// 1935), id as (select distinct id from year_born) select count(*) from id
 
+	private void calScoreTest()
+	{
+		String sql = "SELECT first_name, last_name \n" + 
+				"FROM person p INNER JOIN writer w\n" + 
+				"ON w.id = p.id\n" + 
+				"WHERE p.year_born = 1935;";
+		String ref = "select count(distinct p.first_name) from writer w inner join person p on w.id = p.id where p.year_born = 1935;";
+		MySQLParse parse = new MySQLParse();
+		SQLTree tree = parse.parse(ref);
+		List<SQLTree> trees = new ArrayList<>();
+		trees.add(tree);
+		float result = calBestScore(sql, trees);
+		System.out.println(result);
+
+	}
+
 	public void calExerciseScore(int exercise_id)
 	{
 		List<ExerciseSubmission> submissions = dbHelper
-				.getSubmissionWithCond(" where is_correct =0 and score is null and  exercise_id =  " + exercise_id); // not
-																														// a.id的a无法引到．
-		String sql = "SELECT COUNT(DISTINCT person.id) FROM writer LEFT JOIN person on person.id = writer.id WHERE year_born = 1935;";
+				.getSubmissionWithCond(" where is_correct =0 and score is null and  exercise_id =  " + exercise_id); 																														
+		String sql = " select production_year,count (*)\n" + 
+				" from movie\n" + 
+				" where production_year<1994 and production_year<1990\n" + 
+				" group by production_year;";
 		List<SQLTree> refTrees = getRefTrees(exercise_id);
+		
 		for (ExerciseSubmission submission : submissions)
-		{			
-			sql = submission.getSubmitted_answer();
-			float score = calBestScore(sql, refTrees);
-			count++;
+		{
+			sql = submission.getSubmitted_answer(); 
+			//System.out.printf("begin %s ***", submission.getId());
+			float score = calBestScore(sql, refTrees);			
+			System.out.printf("%d: %d/%d, id: %s, score: %f\n", exercise_id, submissions.indexOf(submission), submissions.size(), submission.getId(), score);
+			
 
 		}
 
@@ -77,9 +101,11 @@ public class CalScore
 	{
 		float result = 0;
 		SQLTree tree = parse.parse(sql);
+		
 		for (SQLTree refTree : refTrees)
 		{
-			float score = calScore(tree, refTree);
+			SQLTree tempTree = tree.deepCopy();
+			float score = calScore(tempTree, refTree);
 			if (score > result)
 				result = score;
 		}
@@ -87,9 +113,12 @@ public class CalScore
 	}
 
 	/**
-	 * 用来计算相似度，最终得分score计算公式如下： score = intersect的结点数 / (refTree的长度 -1) -
-	 * tree较refTree多出的结点数 / (tree的结点数 -1)
-	 * 有个问题需要确认下，即非叶子节点还有不少是类如subquery之类的中间结点，此类结点其实是不应该算进去的． 因此，后面需要统计一下，到底有哪些中间结点．
+	 * 
+	 * 用来计算相似度，最终得分score计算公式如下： score = |tree 交 refTree| -1) / |refTree的长度 -1| －
+	 * |tree - refTree| 由于在计算时，已经删除了所有的中间节点，因此不需要再进行-1操作，score = |tree 交 refTree| /
+	 * |refTree的长度 | － ｜tree - refTree｜/ |tree|． tree - refTree表示
+	 * tree比refTree多出来的节点． 有个问题需要确认下，即非叶子节点还有不少是类如subquery之类的中间结点，此类结点其实是不应该算进去的．
+	 * 因此，后面需要统计一下，到底有哪些中间结点．
 	 * 
 	 * @param tree
 	 * @param refTree
@@ -97,10 +126,17 @@ public class CalScore
 	 */
 	private float calScore(SQLTree tree, SQLTree refTree)
 	{
-		List<SQLTreeNode> intersct = new ArrayList<>(); // 相同节点
-		lookupIntersect(tree.getRoot().getChildrenWithoutTempNode(), refTree.getRoot().getChildrenWithoutTempNode(),
+		Set<SQLTreeNode> intersct = new HashSet(); // 相同节点
+		SQLTree tempTree = tree.deepCopy();
+		lookupIntersect(tempTree.getRoot().getChildrenWithoutTempNode(), refTree.getRoot().getChildrenWithoutTempNode(),
 				intersct);
-		return 0;
+		float similarity = (intersct.size() * 1.0f) / refTree.getNodeCount() ;
+		Set treeNodes = tree.getNodes(IGNORE_ORDERBY);
+		int sizeOfTree = treeNodes.size();
+		Set refNodes = refTree.getNodes(IGNORE_ORDERBY);
+		treeNodes.removeAll(refNodes);
+		float diff = treeNodes.size() * 1.0f / sizeOfTree;
+		return similarity - diff ;		
 	}
 
 	/**
@@ -110,65 +146,42 @@ public class CalScore
 	 * @param refNodes
 	 * @param intersct
 	 */
-	private void lookupIntersect(List<SQLTreeNode> condNodes, List<SQLTreeNode> refNodes, List<SQLTreeNode> intersct)
+	private void lookupIntersect(List<SQLTreeNode> condNodes, List<SQLTreeNode> refNodes, Set<SQLTreeNode> intersct)
 	{
+		//List<SQLTreeNode> tempNodes = new ArrayList<>(condNodes);
 		for (SQLTreeNode refNode : refNodes)
-		{
-			boolean repeating = false;
-			for (SQLTreeNode condNode : condNodes)
+		{			
+			for (int i = 0; i < condNodes.size(); i++)
 			{
+				SQLTreeNode condNode = condNodes.get(i);
 				if (refNode.getSimpleData().equals(condNode.getSimpleData()))
 				{
-					intersct.add(refNode);
-					//遇到WithSubSequery，它的子节点会包含一堆的winthSub,这些withSub如何进行排列组合就是一个大问题了．
-					//不过里面应该全部都是WithSub
-					if (refNode.getSimpleData().contains("WithSubSequery"))
-					{
-						List<SQLTreeNode> withsub1 = refNode.getChildren();
-						List<SQLTreeNode> withsub2 = condNode.getChildren();
-						List<SQLTreeNode> nodes = calPermutations(withsub1, withsub2);
-					} else
-					{
-						if (refNode.hasChild() && condNode.hasChild())
-							lookupIntersect(condNode.getChildrenWithoutTempNode(), refNode.getChildrenWithoutTempNode(),
-									intersct);
-						if (repeating && refNode.hasChild())
-						{
-							System.out.println("ERROR");
-							System.exit(1);
-						}
-						repeating = true;
-					}
+					if (refNode.isTempNode() == false)
+						intersct.add(refNode);
+					// 遇到WithSubSequery，它的子节点会包含一堆的winthSub,这些withSub如何进行排列组合就是一个大问题了．
+					// 不过里面应该全部都是WithSub, 在这次就先不管了．．后续扩展再加吧
+					/*
+					 * if (refNode.getSimpleData().contains("WithSubSequery") ||
+					 * refNode.getSimpleData().contains("Union")) { if (refNode.hasChild() &&
+					 * condNode.hasChild()) lookupIntersect(condNode.getChildrenWithoutTempNode(),
+					 * refNode.getChildrenWithoutTempNode(), intersct); }
+					 */
+					if (refNode.hasChild() && condNode.hasChild())
+						lookupIntersect(condNode.getChildrenWithoutTempNode(), refNode.getChildrenWithoutTempNode(),
+								intersct);
+					if(condNode.hasChild() == false)
+						condNode.removeNodeFromTree(condNode.getData());
+					condNodes.remove(i);
+					break;
 				}
 			}
 		}
 	}
 
-	/**由于withSub1和withsub2各自都有好几个节点，因此需要考虑排列结合的搭配
-	 * 所有节点都是WithEntry,而且所有的子节点没有包含With
-	 * @param withsub1
-	 * @param withsub2
-	 * @return
-	 */
-	private List<SQLTreeNode> calPermutations(List<SQLTreeNode> withsub1, List<SQLTreeNode> withsub2)
-	{
-		for(int i=0; i< withsub1.size(); i++)
-		{
-			
-		}
-		return null;
-	}
 
-	/**
-	 * 删除重复的答案
-	 * 
-	 * @param refNodes
-	 */
-	private void removeDuplicate(List<List<String>> refNodes)
-	{
-		// TODO Auto-generated method stub
 
-	}
+
+
 
 	/**
 	 * 返回指定exercise_id的所有正确答案的TreeNode集合
