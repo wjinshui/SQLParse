@@ -106,6 +106,9 @@ FROM person p;
 WHERE NOT EXISTS (SELECT * FROM director d WHERE p.id = d.id);
  ******************************
 
+with movwritid as (with modir as (select movie.title,movie.production_year,id from movie,director where movie.title=director.title and movie.production_year=director.production_year) select modir.title,modir.production_year,modir.id from modir, writer where modir.id=writer.id and modir.title=writer.title and modir.production_year=writer.production_year) select t.id,t.first_name, t.last_name from( select person.id,person.first_name, person.last_name,count(*)as number from person, movwritid where person.id=movwritid.id group by person.id) as t where t.number>1
+ ******************************
+
 SELECT director.title
 FROM director
 GROUP BY director.id
@@ -361,6 +364,9 @@ lower(ap.description)='exactly';
      
  ******************************
 
+WITH notwon AS ( WITH aout AS( SELECT title, production_year, result FROM actor_award aw WHERE lower(result) = 'won' UNION SELECT title, production_year, result FROM movie_award WHERE lower(result) = 'won' UNION SELECT title, production_year, result FROM director_award WHERE lower(result) = 'won' UNION SELECT title, production_year, result FROM crew_award WHERE lower(result) = 'won' UNION SELECT title, production_year, result FROM writer_award WHERE lower(result) = 'won' ) SELECT DISTINCT m.title, m.production_year FROM aout, movie m WHERE NOT EXISTS( SELECT * FROM aout WHERE lower(aout.title) = lower(m.title) AND aout.production_year = m.production_year ) ) SELECT COUNT(*) FROM notwon 
+ ******************************
+
 SELECT COUNT(*) AS number_of_non_awarded_movies
 FROM movie a, movie_award b, crew_award c, director_award d, writer_award e, actor_award f
 WHERE a.title=b.title=c.title=d.title=e.title=f.title 
@@ -446,35 +452,15 @@ SELECT id FROM PERSON WHERE year_born=
 (SELECT MAX(year_born) FROM PERSON);
  ******************************
 
-select id
-from person p (delete from person p where year_born=max(year_born))
-where year_born= (select max(year_born) from person p）;
- ******************************
-
 select id, year_born desc from person
 order by year_born desc
 limit 1,1;
  ******************************
 
-DELETE FROM person p1
-WHERE year_born=(SELECT MAX(year_born) FROM person p1）
-SELECT id 
-FROM person p2
-WHERE year_born=(SELECT MAX(year_of_born)FROM person p2);
+with t3 as (with t2 as (select distinct id,title,production_year from (select id, title, production_year from director union select id, title, production_year from writer) t1) select count(id) as total,id from t2 group by id) select id from t3 where total=(select max(total) from t3)
  ******************************
 
-DELETE FROM person 
-WHERE year_born=(SELECT MAX(year_born) FROM person）
-SELECT id 
-FROM person 
-WHERE year_born=(SELECT MAX(year_of_born)FROM person);
- ******************************
-
-DELETE FROM person p 
-WHERE p.year_born=(SELECT MAX(p.year_born) FROM p）
-SELECT id.p
-FROM person p 
-WHERE p.year_born=(SELECT MAX(p.year_of_born)FROM p);
+WITH nmov AS ( WITH wrdir AS ( SELECT d.id, d.title, d.production_year FROM director d UNION SELECT w.id, w.title, w.production_year FROM writer w ) SELECT DISTINCT p.id, COUNT(w.title) AS no_mov FROM person p, wrdir w WHERE p.id = w.id GROUP BY p.id ORDER BY no_mov DESC ) SELECT nmo.id FROM nmov nmo WHERE nmo.no_mov IN ( SELECT MAX(nm.no_mov) FROM nmov nm ) 
  ******************************
 
 SELECT DISTINCT p.id 

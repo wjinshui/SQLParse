@@ -25,7 +25,7 @@ public class SQLTreeNode implements Serializable
 	// 2140:select count(distinct id) from person p natural join writer w where p.year_born = 1935
 	private static final String[] TempNodes = {"ROOT", "SubSelect",  "BinaryOp","MethodInvoke" ,  "UnionQuery", "On","Left", "Right", 
 			"UnionQuery","InList","List", "InSubQuery", 
-			"BetweenOper","Range","NotExpr","Function" };
+			"BetweenOper","Range","NotExpr","Function" };	
 	private static List<String> tempNodeList;
 	public static SQLExpr ROOT = new SQLCharExpr("ROOT"); 
 	private SQLObject type;
@@ -170,15 +170,10 @@ public class SQLTreeNode implements Serializable
 		List<SQLTreeNode> children = getChildren();
 		List<SQLTreeNode> result = new ArrayList<>();
 		for (SQLTreeNode sqlTreeNode : children) {
-			if(sqlTreeNode.getSimpleData().equals("UnionQuery"))
+			if(sqlTreeNode.getSimpleData().equals("COMMA"))
 			{
 				result.addAll(sqlTreeNode.getChildrenWithoutTempNode());
 				
-			}
-			
-			else if(tempNodeList.contains(sqlTreeNode.getSimpleData()))
-			{				
-				result.addAll(sqlTreeNode.getChildrenWithoutTempNode() );
 			}
 			else {
 				result.add(sqlTreeNode);

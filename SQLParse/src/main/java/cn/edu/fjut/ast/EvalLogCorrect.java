@@ -14,8 +14,8 @@ import cn.edu.fjut.util.Log;
  */
 public class EvalLogCorrect {
 	public static void main(String[] args) {
-		Log log = new Log(false);
-		int exercise_id = 1１;
+		Log log = new Log("ref.txt", false);
+		int exercise_id = 24;
 		List<String> sqls = log.getContent();
 		DBHelper dbHelper = DBHelper.getInstance();
 		EvalResult evalResult = new EvalResult();

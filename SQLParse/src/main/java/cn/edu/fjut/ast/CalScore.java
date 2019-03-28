@@ -72,10 +72,8 @@ public class CalScore
 	{
 		List<ExerciseSubmission> submissions = dbHelper
 				.getSubmissionWithCond(" where is_correct =0 and score is null and  exercise_id =  " + exercise_id); 																														
-		String sql = " select production_year,count (*)\n" + 
-				" from movie\n" + 
-				" where production_year<1994 and production_year<1990\n" + 
-				" group by production_year;";
+		String sql = "select dw.id, dw.first_name, dw.last_name, count(*) as count from (person natural join director natural join writer) dw group by dw.id having count > 1;";
+		//select count(*) from person p where not exists (select * from person natural join director where p.id = director.id)
 		List<SQLTree> refTrees = getRefTrees(exercise_id);
 		
 		for (ExerciseSubmission submission : submissions)
@@ -83,10 +81,12 @@ public class CalScore
 			sql = submission.getSubmitted_answer(); 
 			//System.out.printf("begin %s ***", submission.getId());
 			float score = calBestScore(sql, refTrees);			
-			System.out.printf("%d: %d/%d, id: %s, score: %f\n", exercise_id, submissions.indexOf(submission), submissions.size(), submission.getId(), score);
-			
-
+			submission.setScore(score);
+			System.out.printf("%d: %d/%d, id: %s, score: %f\n", exercise_id, submissions.indexOf(submission), submissions.size(), submission.getId(), score);	
 		}
+		
+		dbHelper.updateScore(submissions);
+		System.out.println("Mission Completed!");
 
 	}
 
@@ -157,7 +157,9 @@ public class CalScore
 				if (refNode.getSimpleData().equals(condNode.getSimpleData()))
 				{
 					if (refNode.isTempNode() == false)
-						intersct.add(refNode);
+					{
+						intersct.add(refNode);						
+					}
 					// 遇到WithSubSequery，它的子节点会包含一堆的winthSub,这些withSub如何进行排列组合就是一个大问题了．
 					// 不过里面应该全部都是WithSub, 在这次就先不管了．．后续扩展再加吧
 					/*

@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.text.CaseUtils;
-
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLLimit;
@@ -39,7 +37,6 @@ import com.alibaba.druid.sql.ast.statement.SQLSelect;
 import com.alibaba.druid.sql.ast.statement.SQLSelectGroupByClause;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectOrderByItem;
-import com.alibaba.druid.sql.ast.statement.SQLSelectQuery;
 import com.alibaba.druid.sql.ast.statement.SQLSelectQueryBlock;
 import com.alibaba.druid.sql.ast.statement.SQLSubqueryTableSource;
 import com.alibaba.druid.sql.ast.statement.SQLUnionQuery;
@@ -80,10 +77,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 
 		String sql;
 		//sql = "SELECT count(production_year) from movie WHERE production_year = 1993 or production_year = 1992 or production_year = 1991 Group by production_year;";
-		sql =  " select production_year,count (*)\n" + 
-				" from movie\n" + 
-				" where production_year<1994 and 1990 < production_year\n" + 
-				" group by production_year;";
+		sql =  "select dw.id, dw.first_name, dw.last_name from (person p natural join director d natural join writer w) as dw group by dw.id having count(*) > 1;";
 		boolean singlesql = true;
 		//singlesql = false;
 		int begin = 0;
@@ -468,6 +462,13 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		} else if (curObj instanceof SQLLimit) {
 			SQLLimit limit = (SQLLimit) curObj;
 			parseChild(parentNode, limit.getRowCount());
+			if(limit.getOffset() != null)
+			{
+				SQLTreeNode offset = new SQLTreeNode("Offset");
+				parentNode.addChild(offset);
+				parseChild(offset, limit.getOffset());
+			}
+			
 		} else if (curObj instanceof SQLOrderBy) {
 			SQLOrderBy orderby = (SQLOrderBy) curObj;
 			parseChildren(parentNode, orderby.getItems());

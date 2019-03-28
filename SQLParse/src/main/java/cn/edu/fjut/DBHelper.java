@@ -88,7 +88,7 @@ public class DBHelper {
 			while(rs.next())
 			{
 				String str = rs.getString(1).trim();
-				str = str.replaceAll("[\r\n\t]", " ").toLowerCase();
+				str = str.replaceAll("[\r\n\t]", " ");
 				str= str.replaceAll(" +"," ");
 				str = rs.getString(2).trim() + ";" + str;
 				set.add(str);
@@ -98,7 +98,8 @@ public class DBHelper {
 					System.out.println(string);
 				sb.append(string + "\n");
 			}
-			Log log = new Log();
+			
+			Log log = new Log("ref.txt", true);
 			log.log(sb.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -222,27 +223,7 @@ public class DBHelper {
 		}
 	}
 	
-	public void updateScore(List<String> updateToTrue, float score)
-	{		
-		String sql;		
-		sql = "update exercises_judgement set score = ? where id  = ?";		
-		try {
-			conn.setAutoCommit(false);
-			PreparedStatement ps = conn.prepareStatement(sql);
-			for (String id : updateToTrue) {
-				ps.setFloat(1, score);
-				ps.setString(2, id);
-				ps.addBatch();
-			}
-			ps.executeBatch();
-			ps.clearBatch();
-			ps.clearParameters();
-			conn.commit();
-			conn.setAutoCommit(true);			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}		
-	}
+
 	
 	public List<ExerciseSubmission> getSubmission(int exercise_id)	
 	{
@@ -411,7 +392,7 @@ public class DBHelper {
 		helper.updateScore(updateToFalse, 0);
 		System.out.println("Mission Complete!");*/
 		helper.exportResult("select distinct(trim(  submitted_answer)), exercisesubmission_ptr_id from submitanswer\n" + 
-				"where is_correct = 1 and exercise_id = 11" );
+				"where is_correct = 1 and exercise_id = 24" );
 		System.out.println("Mission Completed!");
 		
         
@@ -442,7 +423,50 @@ public class DBHelper {
 		
 	}
 
+	public void updateScore(List<ExerciseSubmission> submissions)
+	{
+		String sql = "update exercises_judgement set score = ? where id  = ?";	
+		try
+		{
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (ExerciseSubmission exerciseSubmission : submissions)
+			{
+				ps.setFloat(1, exerciseSubmission.getScore());
+				ps.setString(2, exerciseSubmission.getId());
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			conn.commit();
+			conn.setAutoCommit(true);
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+	}
 
+	public void updateScore(List<String> updateToTrue, float score)
+	{		
+		String sql;		
+		sql = "update exercises_judgement set score = ? where id  = ?";		
+		try {
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (String id : updateToTrue) {
+				ps.setFloat(1, score);
+				ps.setString(2, id);
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			ps.clearBatch();
+			ps.clearParameters();
+			conn.commit();
+			conn.setAutoCommit(true);			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+	}
 
 
 
