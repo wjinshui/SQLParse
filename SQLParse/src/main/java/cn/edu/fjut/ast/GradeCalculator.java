@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import cn.edu.fjut.DBHelper;
 import cn.edu.fjut.bean.ExerciseSubmission;
 import cn.edu.fjut.bean.RefAnswer;
@@ -14,38 +13,32 @@ import tree.GenTreeGraph;
 
 /**
  * 这个类完成打分操作
- * 
+ * 需要注意是否无视大小写，当大小写有区分时，　from Table 与 from table两者是不一样的。
  * @author admin-u1064462
  *
  */
-public class CalScore
+public class GradeCalculator
 {
 	DBHelper dbHelper = DBHelper.getInstance();
-	public static final boolean IGNORE_ORDERBY = true;
-	MySQLParse parse;
+	public static final boolean IGNORE_ORDERBY = true; //Ignore the order by clause
+	public static final boolean IGNORE_CASE = true;  // Ignore the case of sql statmement
+	MySQLParse parser;
 
-	public CalScore()
+	public GradeCalculator()
 	{
-		parse = new MySQLParse();
+		parser = new MySQLParse();
 	}
 
 	static int count = 0;
 
 	public static void main(String[] args)
 	{
-		CalScore calScore = new CalScore();
-		int i = 10;
-		for (; i <= 24; i++)
+		GradeCalculator calScore = new GradeCalculator();
+		
+		int i = 1;
+		for (; i <= GlobalSetting.MAX_EXERCISE_ID; i++)
 			calScore.calExerciseScore(i);
 		System.out.println(count);
-		/*
-		 * String sql =
-		 * "SELECT count(*) FROM person p WHERE EXISTS (SELECT * FROM writer w WHERE  p.year_born = 1935);"
-		 * ; SQLTree tree1 = calScore.parse.parse(sql); sql =
-		 * "SELECT count(*) FROM person p WHERE EXISTS (SELECT * FROM writer w WHERE w.id = p.id AND p.year_born = 1935);"
-		 * ; SQLTree tree2 = calScore.parse.parse(sql); calScore.calScore(tree1, tree2);
-		 */
-		//calScore.calScoreTest();
 
 	}
 
@@ -71,21 +64,23 @@ public class CalScore
 	public void calExerciseScore(int exercise_id)
 	{
 		List<ExerciseSubmission> submissions = dbHelper
-				.getSubmissionWithCond(" where is_correct =0 and score is null and  exercise_id =  " + exercise_id); 																														
-		String sql = "select dw.id, dw.first_name, dw.last_name, count(*) as count from (person natural join director natural join writer) dw group by dw.id having count > 1;";
-		//select count(*) from person p where not exists (select * from person natural join director where p.id = director.id)
+				.getSubmissionWithCond(" where is_correct = 0 and exercisesubmission_ptr_id not in "
+						+ "( select id from exercise_remark where remark = 'noninterpretable' )"
+						+ " and  exercise_id =  " + exercise_id); 																														
+		String sql ;
 		List<SQLTree> refTrees = getRefTrees(exercise_id);
 		
 		for (ExerciseSubmission submission : submissions)
 		{
 			sql = submission.getSubmitted_answer(); 
-			//System.out.printf("begin %s ***", submission.getId());
+			if(IGNORE_CASE)
+				sql = sql.toLowerCase();
 			float score = calBestScore(sql, refTrees);			
 			submission.setScore(score);
 			System.out.printf("%d: %d/%d, id: %s, score: %f\n", exercise_id, submissions.indexOf(submission), submissions.size(), submission.getId(), score);	
 		}
 		
-		dbHelper.updateScore(submissions);
+		//dbHelper.updateScore(submissions);
 		System.out.println("Mission Completed!");
 
 	}
@@ -100,7 +95,7 @@ public class CalScore
 	private float calBestScore(String sql, List<SQLTree> refTrees)
 	{
 		float result = 0;
-		SQLTree tree = parse.parse(sql);
+		SQLTree tree = parser.parse(sql);
 		
 		for (SQLTree refTree : refTrees)
 		{
@@ -114,9 +109,8 @@ public class CalScore
 
 	/**
 	 * 
-	 * 用来计算相似度，最终得分score计算公式如下： score = |tree 交 refTree| -1) / |refTree的长度 -1| －
-	 * |tree - refTree| 由于在计算时，已经删除了所有的中间节点，因此不需要再进行-1操作，score = |tree 交 refTree| /
-	 * |refTree的长度 | － ｜tree - refTree｜/ |tree|． tree - refTree表示
+	 * 用来计算相似度，最终得分score计算公式如下： score = |tree 交 refTree| ) / |refTree的长度 | －　｜tree - refTree｜/ |tree|
+	 * |tree - refTree| 由于在计算时，已经删除了所有的中间节点，因此不需要再进行-1操作
 	 * tree比refTree多出来的节点． 有个问题需要确认下，即非叶子节点还有不少是类如subquery之类的中间结点，此类结点其实是不应该算进去的．
 	 * 因此，后面需要统计一下，到底有哪些中间结点．
 	 * 
@@ -124,7 +118,7 @@ public class CalScore
 	 * @param refTree
 	 * @return
 	 */
-	private float calScore(SQLTree tree, SQLTree refTree)
+	public float calScore(SQLTree tree, SQLTree refTree)
 	{
 		Set<SQLTreeNode> intersct = new HashSet(); // 相同节点
 		SQLTree tempTree = tree.deepCopy();
@@ -181,10 +175,6 @@ public class CalScore
 	}
 
 
-
-
-
-
 	/**
 	 * 返回指定exercise_id的所有正确答案的TreeNode集合
 	 * 
@@ -194,14 +184,16 @@ public class CalScore
 	public List<List<String>> getRefNodes(int exercise_id)
 	{
 		List<List<String>> result = new ArrayList<>();
-		List<RefAnswer> refAnswers = dbHelper.getAllRefAnswer(exercise_id);
+		List<RefAnswer> refAnswers = dbHelper.getCorrectAnswers(exercise_id);
 
 		for (RefAnswer refAnswer : refAnswers)
 		{
-			System.out.println(refAnswer.getId());
-			SQLTree tree = parse.parse(refAnswer.getAnswer());
+			String answer = refAnswer.getAnswer();
+			if(IGNORE_CASE)
+				answer = answer.toLowerCase();
+			SQLTree tree = parser.parse(answer);
 			result.add(tree.getResultNodes());
-			System.out.println("end");
+			
 		}
 		return result;
 	}
@@ -209,14 +201,22 @@ public class CalScore
 	private List<SQLTree> getRefTrees(int exercise_id)
 	{
 		List<SQLTree> refTrees = new ArrayList<>();
-		List<RefAnswer> refAnswers = dbHelper.getAllRefAnswer(exercise_id);
+		//List<RefAnswer> refAnswers = dbHelper.getCorrectAnswers(exercise_id);
+		List<RefAnswer> refAnswers = dbHelper.getRefAnswers(exercise_id);
 		for (RefAnswer refAnswer : refAnswers)
 		{
-			SQLTree tree = parse.parse(refAnswer.getAnswer());
+			//System.out.printf("%d: %s\n", refAnswers.indexOf(refAnswer), refAnswer.getAnswer());
+			String answer = refAnswer.getAnswer();
+			if(IGNORE_CASE)
+				answer = answer.toLowerCase();
+			SQLTree tree = parser.parse(answer);
 			refTrees.add(tree);
 		}
 		return refTrees;
 	}
+	
+
+
 
 	private void displayTree(SQLTree tree)
 	{

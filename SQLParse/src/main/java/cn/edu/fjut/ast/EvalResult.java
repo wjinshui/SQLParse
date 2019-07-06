@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Set;
 
 import cn.edu.fjut.DBHelper;
+import cn.edu.fjut.bean.ExerciseRemark;
 import cn.edu.fjut.bean.ExerciseSubmission;
 
 /**
- * 通过对比提交的SQL与参考答案SQL两者执行结果，判断结果是否正确
+ * 通过对比提交的SQL与参考答案SQL两者执行结果，以完成对答案的分类 
  * @author admin-u1064462
  * @date 2019.1.17
  */
@@ -19,28 +20,25 @@ public class EvalResult {
 	HashMap<Integer, Set<Set<String>>> refAnswer ;
 	public EvalResult() {
 		dbHelper = DBHelper.getInstance();
-		refAnswer = dbHelper.getRefAnswer();
+		refAnswer = dbHelper.getRefExeResult();
 	}
 	
 	public boolean evalAnswer(int id, Set<Set<String>> answer)
 	{		
-		Set<Set<String>> correct = refAnswer.get(id);
+		Set<Set<String>> correct = refAnswer.get(id);		
 		return correct.equals(answer);
 	}
 	
-	/**
-	 * 将所有执行会抛异常的SQL设置为０
-	 * @param exercise_id
-	 */
-	private void setAllUnExecutableToZero(int exercise_id)
-	{
-		
-	}
+
 	
 	public static void main(String[] args) {		
 		EvalResult evalResult = new EvalResult();		
 		//evalResult.dbHelper.initialScore();
-		evalResult.evalExercise(11);
+		for(int i = 10; i <= 24; i++)
+		{
+			System.out.println("************************** " + i + "**************************");
+			evalResult.evalExercise(i);
+		}
 	}
 	
 	/**对指定题进行改题，　依据是对比输入sql与答案sql是否相似进行
@@ -54,15 +52,28 @@ public class EvalResult {
 		boolean correct = false;
 		List<String> updateToTrue = new ArrayList<String>();
 		List<String> updateToFalse = new ArrayList<String>();
+		List<ExerciseRemark> remarks = new ArrayList<>();
 		for (ExerciseSubmission exerciseSubmission : submissions) {
 			String answer = exerciseSubmission.getSubmitted_answer();	
 			// 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．
 			if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374") )
 			{
 				System.out.println(exerciseSubmission);
+				ExerciseRemark remark = new ExerciseRemark(exerciseSubmission.getId(), "delete", exerciseSubmission.getSubmitted_answer());
+				remarks.add(remark);
 				continue;
 			}		
-			correct = evalAnswer(exerciseID, dbHelper.getAnswer(answer));			
+			Set<Set<String>> results = dbHelper.getAnswer(answer);
+			if(results == null)
+				correct = false;
+			else
+				correct = evalAnswer(exerciseID, results );
+			ExerciseRemark remark = null;
+			if(results  == null)
+				remark = new ExerciseRemark(exerciseSubmission.getId(), "Noninterpretable", exerciseSubmission.getSubmitted_answer());
+			else
+				remark = new ExerciseRemark(exerciseSubmission.getId(), String.valueOf(correct), exerciseSubmission.getSubmitted_answer());
+			remarks.add(remark);
 			if(correct != exerciseSubmission.is_correct())
 			{
 				if(correct)
@@ -71,6 +82,7 @@ public class EvalResult {
 					updateToFalse.add(exerciseSubmission.getId());				
 			}			
 		}
+		//dbHelper.updateRemarks(remarks);
 		System.out.println("To True: " + updateToTrue.size() + " To False: " + updateToFalse.size());
 		for (String id : updateToTrue) {
 			System.out.println(id);

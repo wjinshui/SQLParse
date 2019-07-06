@@ -10,6 +10,11 @@ public class ExerciseSubmission {
 
 	
 
+	public void setSubmitted_answer(String submitted_answer)
+	{
+		this.submitted_answer = submitted_answer;
+	}
+
 	public float getScore() {
 		return score;
 	}

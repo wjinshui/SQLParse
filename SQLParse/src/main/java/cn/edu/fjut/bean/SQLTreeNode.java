@@ -24,7 +24,7 @@ public class SQLTreeNode implements Serializable
 	// 3700:select count(distinct p.id) from person p inner join writer w where p.year_born = 1935;  
 	// 2140:select count(distinct id) from person p natural join writer w where p.year_born = 1935
 	private static final String[] TempNodes = {"ROOT", "SubSelect",  "BinaryOp","MethodInvoke" ,  "UnionQuery", "On","Left", "Right", 
-			"UnionQuery","InList","List", "InSubQuery", 
+			"UnionQuery","InList","List", "InSubQuery", "COMMA",
 			"BetweenOper","Range","NotExpr","Function" };	
 	private static List<String> tempNodeList;
 	public static SQLExpr ROOT = new SQLCharExpr("ROOT"); 

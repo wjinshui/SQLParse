@@ -17,6 +17,8 @@ import com.alibaba.druid.sql.ast.expr.SQLAllColumnExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBetweenExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOperator;
+import com.alibaba.druid.sql.ast.expr.SQLCaseExpr;
+import com.alibaba.druid.sql.ast.expr.SQLCaseExpr.Item;
 import com.alibaba.druid.sql.ast.expr.SQLCastExpr;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLExistsExpr;
@@ -54,30 +56,23 @@ import cn.edu.fjut.bean.SQLTreeNode;
 import cn.edu.fjut.util.Log;
 import tree.GenTreeGraph;
 
+/**
+ * 这个类是做SQL解析
+ * @author admin-u1064462
+ *
+ */
 public class MySQLParse extends SQLASTVisitorAdapter {
 
 	SchemaRepository repository;
 	final String dbType = JdbcConstants.MYSQL;
 
 	public static void main(String[] args) {
-		/***
-		 * 第一条成功双向解析的语句： select p.first_name, p.last_name, r.title, r.production_year,
-		 * r.description from role r, movie m, person p where p.id = r.id and r.title =
-		 * m.title and r.production_year = m.production_year and r.id = ( select r2.id
-		 * from role r2, movie m2 where r2.title = m2.title and r2.production_year =
-		 * m2.production_year group by r2.id having count(r2.id) = (select
-		 * max(uni1.work_total) from ( select r1.id, count(*) as work_total from role
-		 * r1, movie m1 where r1.title = m1.title and r1.production_year =
-		 * m1.production_year group by r1.id) as uni1));
-		 */
+
 		MySQLParse sqlParse = new MySQLParse();
 		DBHelper dbHelper = DBHelper.getInstance();
-		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); // not
-																											// a.id的a无法引到．
-
+		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); 
 		String sql;
-		//sql = "SELECT count(production_year) from movie WHERE production_year = 1993 or production_year = 1992 or production_year = 1991 Group by production_year;";
-		sql =  "select dw.id, dw.first_name, dw.last_name from (person p natural join director d natural join writer w) as dw group by dw.id having count(*) > 1;";
+		sql =  "select count(*) from person p where exists (select * from writer w where w.id=p.id group by w.id having year_born=1935)";
 		boolean singlesql = true;
 		//singlesql = false;
 		int begin = 0;
@@ -204,7 +199,9 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		}
 
 		else {
+			
 			System.out.println(owner);
+			System.exit(1);
 		}
 
 		return result;
@@ -247,9 +244,11 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 
 		}
 
-		else if (curObj instanceof SQLJoinTableSource) {
-			SQLJoinTableSource source = (SQLJoinTableSource) curObj;
+		else if (curObj instanceof SQLJoinTableSource) { 
+			SQLJoinTableSource source = (SQLJoinTableSource) curObj;				
 			SQLTreeNode node = new SQLTreeNode(source.getJoinType().toString());
+			if(source.isNatural())
+				node.setData("Natural " + node.getData());
 			parentNode.addChild(node);
 			if (source.getAlias() != null)
 				tree.putAlias(source.getAlias(), node);
@@ -482,7 +481,17 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 				itemNode.addChild(type);
 			}
 		}
-
+		else if (curObj instanceof SQLCaseExpr)
+		{
+			SQLCaseExpr expr = (SQLCaseExpr) curObj;
+			SQLTreeNode caseNode = new SQLTreeNode("CASE");
+			parentNode.addChild(caseNode);
+			for (Item iterable_element : expr.getItems())
+			{
+				caseNode.addChild(new SQLTreeNode(iterable_element.toString()));
+			}
+			
+		}
 		else if (curObj instanceof SQLSelect) {
 			SQLSelect select = (SQLSelect) curObj;
 			if (select.getWithSubQuery() != null)
@@ -552,9 +561,12 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 				parseChildren(node, expr.getArguments());
 			else if(expr.getMethodName().equals("COUNT") && expr.getArguments().size() ==0) //当count()没有参数时，需要手工加上一个*
 				parseChild(node, new SQLAllColumnExpr());
-		} else {
+		}
+
+		else {
 			System.out.println(curObj);
 			log.log("###################################\n" + curObj.toString() + "#####################\n");
+			System.exit(1);
 
 		}
 
