@@ -25,7 +25,7 @@ public class CheckSyntax
 		for (ExerciseSubmission exerciseSubmission : submissions)
 		{
 			System.out.printf("%d / %d: %s\n", ++i, submissions.size(), exerciseSubmission.getId());
-			String id = exerciseSubmission.getId();
+			int id = exerciseSubmission.getId();
 			ExerciseRemark remark = new ExerciseRemark(id);
 			remark.setAnswer(exerciseSubmission.getSubmitted_answer());
 			if(exerciseSubmission.getSubmitted_answer().contains("delete") == false)

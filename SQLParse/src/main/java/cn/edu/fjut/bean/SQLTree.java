@@ -49,7 +49,6 @@ public class SQLTree implements Serializable
 			
 		} catch (Exception e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return newTree;
@@ -261,23 +260,57 @@ public class SQLTree implements Serializable
 	public int getNodeCount()
 	{
 		Set<String> visitedNodes = new HashSet<>();
-		visitTree(root, visitedNodes, false);
+		boolean containsLimit = containsLimitNodes(root);
+		visitTree(root, visitedNodes, containsLimit);
 		return visitedNodes.size();
 	}
 	
-	public Set<String> getNodes(boolean ignoreOrderBy)
+	public Set<String> getNodes()
 	{
 		Set<String> visitedNodes = new HashSet<>();
-		visitTree(root, visitedNodes, ignoreOrderBy);
+		boolean containsLimit = containsLimitNodes(root);
+		visitTree(root, visitedNodes, !containsLimit);
 		return visitedNodes;
 	}	
 	
+	
+	/**
+	 * 如果一个SQL语句中只有orderby 且没有limit，则该orderby对结果的输出没有影响，因此可以删除该orderby节点
+	 */
+	public void removeOrderBy(SQLTreeNode node)
+	{
+		for (int i = 0; i < node.getChildren().size(); i++)
+		{
+			SQLTreeNode child = node.getChildren().get(i);
+			if(child.getSimpleData().equals("OrderBy"))
+			{
+				node.getChildren().remove(i);
+				i--;				
+			}		
+			else if( child.getChildren().size()>0)
+				removeOrderBy(child);
+		}
+		
+	}
+	
+	public boolean containsLimitNodes(SQLTreeNode node)
+	{
+		boolean result = false;
+		for (SQLTreeNode child : node.getChildren())
+		{
+			if(child.getSimpleData().equals("Limit"))
+				return true;
+			if(containsLimitNodes(child))
+				return true;
+		}
+		return result;
+	}
 
 	private void visitTree(SQLTreeNode node, Set<String> visitedNodes, boolean ignoreOrderBy)
 	{		
 		if(ignoreOrderBy && node.getSimpleData().equals("OrderBy"))
 			return;
-		if(node.isTempNode() == false)			
+		//if(node.isTempNode() == false)			
 			visitedNodes.add(node.getData());
 		for (SQLTreeNode child : node.getChildren())
 		{

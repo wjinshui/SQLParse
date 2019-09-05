@@ -1,0 +1,325 @@
+select id from person
+where [year_born] = 1935;
+
+ ******************************
+
+select count(*)
+from movie m 
+where exists (select production_year from movie where 1991 <production_year<1993 );
+ ******************************
+
+select count(*)
+from movie
+where production_year>1990 & production_year<1994;
+ ******************************
+
+select count(*),production_year
+from movie
+group by production_year
+having 1990<movie.production_year<1994;
+ ******************************
+
+ select production_year
+ from movie m
+ where 1990<m.production_year<1994;
+ ******************************
+
+select id from person where year_born=
+(select max(year_born) from person)>
+(select max(year_born) from person);
+ ******************************
+
+select id, year_born desc from person
+order by year_born desc
+limit 1,1;
+ ******************************
+
+delete from person p1
+where year_born=(select max(year_born) from person p1）
+select id 
+from person p2
+where year_born=(select max(year_of_born)from person p2);
+ ******************************
+
+delete from person 
+where year_born=(select max(year_born) from person）
+select id 
+from person 
+where year_born=(select max(year_of_born)from person);
+ ******************************
+
+delete from person p 
+where p.year_born=(select max(p.year_born) from p）
+select id.p
+from person p 
+where p.year_born=(select max(p.year_of_born)from p);
+ ******************************
+
+select person.id, person.first_name, person.last_name
+from person inner join writer inner join director
+on person.id = writer.id = director.id
+group by person.id
+having count(*) >= 2;
+
+ ******************************
+
+select p.id, last_name, first_name from person p 
+where exists (select count(*) from writer w, movie m where w.title = m.title >1);
+ ******************************
+
+select p.id,p.first_name,p.last_name
+from person p,director d,writer w
+where p.id=d.id=w.id
+group by w.id, w.title, w.production_year
+having count(d.id)>2;
+ ******************************
+
+select p.id, p.first_name, p.last_name, count(*)
+from person p, director d, writer w
+where p.id=d.id=w.id
+group by p.id, p.first_name, p.last_name
+having count(*)>1;
+ ******************************
+
+select p.id,p.first_name,p.last_name
+from person p
+where exists (select *
+from director e, writer w
+where e.id=p.id=w.id
+group by e.id and w.id
+having count(*)>=2);
+ ******************************
+
+select p.id, p.first_name, p.last_name from person p, writer w, director d where p.id=w.id=d.id and w.title=d.title group by p.id having count(*)>=2;
+ ******************************
+
+select country
+from restriction r
+where exists (select * from restriction_category rc where r.description=rc.description='m');
+ ******************************
+
+select restriction.country from restriction,restriction_category,movie where 
+restriction.country = restriction_category.country and movie.country=restriction.country 
+and movie.title="shakespeare in love as 'm'";
+ ******************************
+
+select count(*)
+from (writer_award natural join person) as wp
+where lower(wp.first_name) ='woody' and lower(last_name)='allen' and 1991<year_of_award<=1995;
+ ******************************
+
+select count(*) from 
+	(select award_name from writer_award wa, writer w, person p
+	where wa.id=w.id=p.id
+	and wa.production_year in (1991,1992,1993,1994,1995)
+	and lower(p.first_name)='woody'
+	and lower(p.last_name)='allen') as a;
+ ******************************
+
+select wa.award_name,count(*)
+from (person natural join writer_award ) as wa
+where wa.first_name = 'woody' and wa.last_name = 'allen'
+group by wa.award_name 
+having 1991<wa.year_of_award <1995;
+ ******************************
+
+select count(*) as total
+from writer_award wa, person p, writer w
+where wa.title = w.title and wa.production_year = w.production_year
+and wa.id = w.id = p.id
+and lower(result) = 'won'
+and lower(first_name) = 'woody'
+and lower(last_name) = 'allen'
+and year_of_award>=1991
+and year_of_award<=1995;
+ ******************************
+
+select count(*)
+from director_award da,  director d, person p
+where (1991<da.production_year<=1995 ) and (da.result='won') and (da.title=d.title)
+       and (p.id=p.id) and (p.first_name='woody allen')
+;
+ ******************************
+
+select person.id
+from movie, role, appearance, person
+where movie.title = role.title = appearance.title and movie.production_year = role.production_year = appearance.production_year
+	and role.id = person.id
+	and movie.title = 'psycho'
+	and movie.production_year = 1960
+	and appearance.scene_no = 1;
+ ******************************
+
+select id
+from;
+
+ ******************************
+
+select pr.id
+from (select * from person,role where person.id=role.id) as pr, 
+(select * from movie,scene where movie.title=scene.title and movie.production_year=scene.production_year) as ms
+where lower(pr.title)=lower(ms.title)="psycho"
+and pr.production_year=ms.production_year=1960
+group by pr.id having count(ms.scene_no)=1;
+ ******************************
+
+select p.id
+from person p, scene s, movie m, role r
+where p.id = r.id
+and r.title = m.title
+and m.title = s.title = 'psycho'
+and m.production_year = s.production_year
+and s.production_year = '1960'
+and (select count(*)
+     from scene
+	 where scene_no = '1');
+ ******************************
+
+select  id
+from (select *
+from role r ,scene n
+where lower(r.title) =lower(n.title)='psycho' and r.production_year and n.production_year=1960)as rn
+group by rn.scene_no
+having count(id)=1;
+
+ ******************************
+
+select id
+from role r
+where exists (select * from appearance ap, scene s
+where r.title=ap.title=s.title and r.production_year=ap.production_year=s.production_year
+and r.description=ap.description=s.description and ap.scene_no=s.scene_no and ap.production_year=1960 and ap.title='psycho')
+group by id
+having count(*)=1;
+ ******************************
+
+select id 
+from scene s,
+     role r,
+     appearance ap
+where lower(s.title=r.title=ap.title)='psycho' and s.production_year=r.production_year=ap.production_year=1960 and lower(s.scene_no=ap.scene_no)='one' and 
+lower(ap.description)='exactly';
+     
+ ******************************
+
+select count(*) as number_of_non_awarded_movies
+from movie a, movie_award b, crew_award c, director_award d, writer_award e, actor_award f
+where a.title=b.title=c.title=d.title=e.title=f.title 
+and b.result!='yes'
+and c.result!='yes'
+and d.result!='yes'
+and e.result!='yes'
+and f.result!='yes';
+ ******************************
+
+select count(*)
+from movie m
+where not exists (select * 
+from movie_award ma,crew_award ca,director_award da,writer_award wa,actor_award aa
+where m.title=ma.title=ca.title=da.title=wa.title=aa.title
+and m.production_year=ma.production_year=ca.production_year=da.production_year=wa.production_year=aa.production_year);
+ ******************************
+
+with notwon as (
+	with aout as(
+			select title, production_year, result
+			from actor_award aw
+			union
+			select title, production_year, result
+			from movie_award
+			union
+			select title, production_year, result
+			from director_award
+			union
+			select title, production_year, result
+			from crew_award
+			union
+			select title, production_year, result
+			from writer_award
+		)
+	select distinct m.title, m.production_year
+	from aout, movie m
+	where lower(aout.result) = 'won'
+		and m.title != aout.title
+		and m.production_year != aout.production_year
+)
+select count(*)
+from notwon
+;
+
+ ******************************
+
+with notwon as (
+	with aout as(
+			select title, production_year, result
+			from actor_award aw
+			where lower(result) = 'won'
+			union
+			select title, production_year, result
+			from movie_award
+			where lower(result) = 'won'
+			union
+			select title, production_year, result
+			from director_award
+			where lower(result) = 'won'
+			union
+			select title, production_year, result
+			from crew_award
+			where lower(result) = 'won'
+			union
+			select title, production_year, result
+			from writer_award
+			where lower(result) = 'won'
+		)
+	select distinct m.title, m.production_year
+	from aout, movie m
+	where m.title != aout.title
+		and m.production_year != aout.production_year
+)
+select count(*)
+from notwon
+;
+
+ ******************************
+
+select distinct p.id 
+from person as p, writer as w, director as d, 
+(select count(m.title) as noofmovie
+from movie as m, writer as w, director as d 
+where m.title=w.title=d.title 
+and m.production_year=w.production_year=d.production_year 
+group by m.title 
+having noofmovie=max(m.title))
+where p.id=d.id
+or p.id=w.id
+or p.id=w.id=d.id;
+ ******************************
+
+select 
+	p.id,
+	count(*)
+from 
+	person p,
+	writer w,
+	director d
+where 
+	p.id = w.id
+	or 
+	p.id = d.id
+	or
+	p.id = d.id = w.id ;
+ ******************************
+
+select p.first_name, p.last_name
+from person p
+where p.id = 
+
+(with y as
+(select x1.id, count(*) as mostroles
+	from (select r.id, r.title, r.production_year, r.description
+		from role as r)x1
+	group by x1.id)
+select y.id from y where
+y.mostroles = (select max(y.mostroles)from y));
+ ******************************
+

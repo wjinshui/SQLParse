@@ -34,7 +34,7 @@ public class EvalResult {
 	public static void main(String[] args) {		
 		EvalResult evalResult = new EvalResult();		
 		//evalResult.dbHelper.initialScore();
-		for(int i = 10; i <= 24; i++)
+		for(int i = 1; i <= GlobalSetting.MAX_EXERCISE_ID; i++)
 		{
 			System.out.println("************************** " + i + "**************************");
 			evalResult.evalExercise(i);
@@ -50,13 +50,13 @@ public class EvalResult {
 	{		
 		List<ExerciseSubmission> submissions =  dbHelper.getSubmission(exerciseID);		
 		boolean correct = false;
-		List<String> updateToTrue = new ArrayList<String>();
-		List<String> updateToFalse = new ArrayList<String>();
+		List<Integer> updateToTrue = new ArrayList<Integer>();
+		List<Integer> updateToFalse = new ArrayList<Integer>();
 		List<ExerciseRemark> remarks = new ArrayList<>();
 		for (ExerciseSubmission exerciseSubmission : submissions) {
 			String answer = exerciseSubmission.getSubmitted_answer();	
 			// 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．
-			if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374") )
+			if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId() == 3374 )
 			{
 				System.out.println(exerciseSubmission);
 				ExerciseRemark remark = new ExerciseRemark(exerciseSubmission.getId(), "delete", exerciseSubmission.getSubmitted_answer());
@@ -84,12 +84,12 @@ public class EvalResult {
 		}
 		//dbHelper.updateRemarks(remarks);
 		System.out.println("To True: " + updateToTrue.size() + " To False: " + updateToFalse.size());
-		for (String id : updateToTrue) {
+		for (Integer id : updateToTrue) {
 			System.out.println(id);
 		}
 		
 		System.out.println("To False");
-		for (String id : updateToFalse) {
+		for (Integer id : updateToFalse) {
 			System.out.println(id);
 		}
 		

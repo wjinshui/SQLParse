@@ -17,9 +17,11 @@ import java.util.SortedSet;
 
 import org.apache.commons.lang3.Validate;
 
+import cn.edu.fjut.bean.ExerciseGrade;
 import cn.edu.fjut.bean.ExerciseJudgement;
 import cn.edu.fjut.bean.ExerciseRemark;
 import cn.edu.fjut.bean.ExerciseSubmission;
+import cn.edu.fjut.bean.GradeApproach;
 import cn.edu.fjut.bean.RefAnswer;
 import cn.edu.fjut.bean.Validation;
 import cn.edu.fjut.util.Log;
@@ -43,14 +45,8 @@ public class DBHelper {
         String uid;       
         uid ="postgres";
         try{
-     /*       String url="jdbc:postgresql://127.0.0.1:5432/test";
-            String user= uid;
-            String password = uid;
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(url, user, password);
-           */
         	Class.forName("org.sqlite.JDBC");
-        	conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB.db");
+        	conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB.sqlite");
             stmt = conn.createStatement();          
         }
         catch (Exception e) {
@@ -117,15 +113,14 @@ public class DBHelper {
 	{
 		String sql ;
 		sql = "update exercises_judgement set score = 100 where is_correct = 1";
-		List<String> ids = new ArrayList<String>();
+		List<Integer> ids = new ArrayList<Integer>();
 		try {
 			stmt.executeUpdate(sql);
 			List<ExerciseSubmission> submissions = getSubmissionWithCond(" where is_correct = 0 ");
 			for (ExerciseSubmission exerciseSubmission : submissions) {
 				System.out.format("%d / %d \n", submissions.indexOf(exerciseSubmission), submissions.size());
-				String answer = exerciseSubmission.getSubmitted_answer();	
-				// 3374那道题执行是错的，但在jdbc中却一直能得到正确的解．．
-				if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId().equals("3374")  )
+				String answer = exerciseSubmission.getSubmitted_answer();
+				if(answer.toLowerCase().contains("delete") || exerciseSubmission.getId() == 3374  )
 				{
 					System.out.println(exerciseSubmission);
 					continue;
@@ -143,8 +138,8 @@ public class DBHelper {
 			sql = "update exercises_judgement set score = 0 where id  = ?";		
 			conn.setAutoCommit(false);
 			PreparedStatement ps = conn.prepareStatement(sql);
-			for (String id : ids) {
-				ps.setString(1, id);
+			for (Integer id : ids) {
+				ps.setInt(1, id);
 				ps.addBatch();
 			}
 			ps.executeBatch();
@@ -210,7 +205,7 @@ public class DBHelper {
 			PreparedStatement ps = conn.prepareStatement(sql);
 			for (ExerciseRemark remark : remarks) {
 				ps.setString(1, remark.getRemark());
-				ps.setString(2, remark.getId());				
+				ps.setInt(2, remark.getId());				
 				ps.addBatch();
 			}
 			ps.executeBatch();
@@ -233,7 +228,7 @@ public class DBHelper {
 			conn.setAutoCommit(false);
 			PreparedStatement ps = conn.prepareStatement(sql);
 			for (ExerciseRemark remark : remarks) {
-				ps.setString(1, remark.getId());
+				ps.setInt(1, remark.getId());
 				ps.setString(2, remark.getRemark());				
 				ps.setString(3, remark.getAnswer());
 				ps.addBatch();
@@ -246,18 +241,56 @@ public class DBHelper {
 		} catch (Exception e)
 		{
 			e.printStackTrace();
+		}	
+	}
+	
+	public void clearGrader(GradeApproach sematic)
+	{
+		String sql = "delete from exercises_grade where approach = '" + sematic + "'";
+		try
+		{
+			stmt.executeUpdate(sql);
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}	
+	}
+	
+	public void insertGrader(List<ExerciseGrade> grades)
+	{
+		String sql = "insert into exercises_grade (submission_id, submitted_answer, grade, approach, most_similar) values (?, ?, ?, ? , ?)";
+		try
+		{
+
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (ExerciseGrade grade : grades)
+			{
+				ps.setInt(1, grade.getSubmission_id());
+				ps.setString(2, grade.getSubmitted_answer());
+				ps.setDouble(3, grade.getGrade());
+				ps.setString(4, grade.getApproach().toString());
+				ps.setString(5, grade.getMost_similary());
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			conn.commit();
+			conn.setAutoCommit(true);
+		} catch (Exception e)
+		{
+			e.printStackTrace();
 		}
-		
 		
 	}
 	
+
 	public void insertRefAnswer(List<RefAnswer> refAnswers) {		
 		String sql;
-		sql = "DELETE FROM exercise_refAnswer\n" + 
+		sql = "DELETE FROM exercises_refAnswer\n" + 
 				" WHERE exercise_id = "  + refAnswers.get(0).getExercise_id();		
 		try {
 			stmt.executeUpdate(sql);
-			sql ="INSERT INTO exercise_refAnswer(exercise_id, id, answer)\n" + 
+			sql ="INSERT INTO exercises_refAnswer(exercise_id, submission_id, submitted_answer)\n" + 
 					"    VALUES (?, ?, ?); ";
 			conn.setAutoCommit(false);
 			PreparedStatement ps = conn.prepareStatement(sql);
@@ -280,13 +313,13 @@ public class DBHelper {
 	public List<ExerciseSubmission> getSubmission(int exercise_id)	
 	{
 		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();
-		String sql = "select exercisesubmission_ptr_id, submitted_answer, answer, exercise_id , is_correct "
-				+ "from submitanswer where exercise_id = " + exercise_id;
+		String sql = "select submission_id, submitted_answer, answer, exercise_id , is_correct "
+				+ "from exercises_result where exercise_id = " + exercise_id;
 		try {
 			ResultSet rSet = stmt.executeQuery(sql);
 			while(rSet.next())
 			{ 
-				ExerciseSubmission submission = new ExerciseSubmission(rSet.getString(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
+				ExerciseSubmission submission = new ExerciseSubmission(rSet.getInt(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
 				results.add(submission);
 			}
 			rSet.close();
@@ -297,8 +330,7 @@ public class DBHelper {
 	}
 	
 	public Set<Set<String>> getAnswer(String sql)
-	{
-		
+	{		
 		//避免对数据库进行删除或更新操作
 		if(sql.toLowerCase().contains("delete") || sql.toLowerCase().contains("update"))
 		{
@@ -344,7 +376,7 @@ public class DBHelper {
 	{
 		HashMap<Integer, Set<Set<String>>> answer = new HashMap<Integer, Set<Set<String>>>();
 		HashMap<Integer, String> idAndSql = new HashMap<Integer, String>();
-		String sql = "select distinct(exercise_id), answer  from submitanswer ";		
+		String sql = "select distinct(exercise_id), answer  from exercises_result ";		
 		try {
 			ResultSet rs = stmt.executeQuery(sql);
 			while(rs.next())
@@ -368,12 +400,12 @@ public class DBHelper {
 	{
 		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();		
 		String sql = "select submission_id, submitted_answer, answer, exercise_id , is_correct "
-				+ "from exercise_result " + condition;
+				+ "from exercises_result " + condition;
 		try {
 			ResultSet rSet = stmt.executeQuery(sql);
 			while(rSet.next())
 			{
-				ExerciseSubmission submission = new ExerciseSubmission(rSet.getString(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
+				ExerciseSubmission submission = new ExerciseSubmission(rSet.getInt(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
 				results.add(submission);
 			}
 			rSet.close();
@@ -405,7 +437,7 @@ public class DBHelper {
 	
 	public List<RefAnswer> getCorrectAnswers(int exercise_id) {
 		List<RefAnswer> refAnswers = new ArrayList<>();
-		String sql = "select exercisesubmission_ptr_id, submitted_answer from exercise_result where is_correct = 1 and exercise_id = " + exercise_id;
+		String sql = "select submission_id, submitted_answer from exercises_result where is_correct = 1 and exercise_id = " + exercise_id;
 		try {
 			ResultSet rs = stmt.executeQuery(sql);
 			while(rs.next())
@@ -419,10 +451,28 @@ public class DBHelper {
 		return refAnswers;
 	}
 	
+	public String getRefAnswer(int exercise_id)
+	{
+		String sql = "select answer from exercises_solution where exercise_id = " + exercise_id;
+		String result = null;
+		try
+		{			
+			ResultSet rs = stmt.executeQuery(sql);
+			if(rs.next())
+				result = rs.getString(1);
+			rs.close();
+				
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
 	public List<RefAnswer> getRefAnswers(int exercise_id)
 	{
 		List<RefAnswer> refAnswers = new ArrayList<>();
-		String sql = "select id, answer from exercise_refAnswer  where exercise_id = " + exercise_id;
+		String sql = "select submission_id, submitted_answer from exercises_refAnswer  where exercise_id = " + exercise_id;
 		try
 		{
 			ResultSet rs = stmt.executeQuery(sql);
@@ -444,17 +494,16 @@ public class DBHelper {
 		String sql  = "select * from exercises_codingexercisesubmission";
 
 		sql = "select submission_id, submitted_answer, answer, exercise_id , is_correct "
-				+ "from exercise_result ";
+				+ "from exercises_result ";
 		try {
 			ResultSet rSet = stmt.executeQuery(sql);
 			while(rSet.next())
 			{
-				ExerciseSubmission submission = new ExerciseSubmission(rSet.getString(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
+				ExerciseSubmission submission = new ExerciseSubmission(rSet.getInt(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
 				results.add(submission);
 			}
 			rSet.close();
-		} catch (Exception e) {
-			// TODO: handle exception
+		} catch (Exception e) {			
 			System.out.println(e.getMessage());
 		}		
 		return results;
@@ -490,15 +539,15 @@ public class DBHelper {
 
 	public void updateScore(List<ExerciseSubmission> submissions)
 	{
-		String sql = "update exercises_judgement set score = ? where id  = ?";	
+		String sql = "update exercises_result set score = ? where submission_id  = ?";	
 		try
 		{
 			conn.setAutoCommit(false);
 			PreparedStatement ps = conn.prepareStatement(sql);
 			for (ExerciseSubmission exerciseSubmission : submissions)
 			{
-				ps.setFloat(1, exerciseSubmission.getScore());
-				ps.setString(2, exerciseSubmission.getId());
+				ps.setDouble(1, exerciseSubmission.getScore());
+				ps.setInt(2, exerciseSubmission.getId());
 				ps.addBatch();
 			}
 			ps.executeBatch();
@@ -536,13 +585,13 @@ public class DBHelper {
 	public void updateSubmitAnswer(List<ExerciseSubmission> submissions)
 	{
 		String sql;		
-		sql = "update exercise_result set submitted_answer = ? where submission_id  = ?";		
+		sql = "update exercises_result set submitted_answer = ? where submission_id  = ?";		
 		try {
 			conn.setAutoCommit(false);
 			PreparedStatement ps = conn.prepareStatement(sql);
 			for (ExerciseSubmission submission : submissions) {
 				ps.setString(1, submission.getSubmitted_answer());
-				ps.setString(2, submission.getId());
+				ps.setInt(2, submission.getId());
 				ps.addBatch();
 			}
 			ps.executeBatch();
@@ -555,6 +604,35 @@ public class DBHelper {
 		}		
 		
 	}
+
+	public void updateResult(List<ExerciseGrade> grades)
+	{
+		String sql;		
+		sql = "update exercises_result set score = ? where submission_id  = ?";		
+		try {
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement(sql);
+			for (ExerciseGrade submission : grades) {
+				ps.setDouble(1, submission.getGrade());
+				ps.setInt(2, submission.getSubmission_id());
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			ps.clearBatch();
+			ps.clearParameters();
+			conn.commit();
+			conn.setAutoCommit(true);			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+		
+	}
+
+
+
+
+
+
 
 
 

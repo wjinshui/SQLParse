@@ -45,6 +45,19 @@ public class Utils {
 		return temp;
 	}
 	
+	public static String Standardize(String query)
+	{
+		
+		return query;
+	}
+	
+	public static String removeBlank(String text)
+	{
+		text = text.replaceAll("[\r\n\t]+", " ");
+		text = text.replaceAll("\\s{2,}", " ");
+		return text;
+	}
+	
 	/**
 	 * 得到两个列表的排列组合，
 	 * 例如 list1中有 a, b, c, list2中有1,2，3, 4 则可得< 
@@ -53,7 +66,6 @@ public class Utils {
 	 * <<a,1>, <b,3> < c, 2>>,
 	 * <<a, 1>, <b, 3>, <c, 4>>
 	 * <<a, 2>, < b,1 >,<c,3>>
-	 * ....
 	 * >
 	 * @param list1
 	 * @param list2

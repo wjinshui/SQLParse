@@ -2,13 +2,13 @@ package cn.edu.fjut.bean;
 
 public class ExerciseRemark
 {
-	String id;
+	int id;
 	String remark;
 	String answer;
 	
 	
 	
-	public ExerciseRemark(String id, String remark, String answer)
+	public ExerciseRemark(int id, String remark, String answer)
 	{
 		super();
 		this.id = id;
@@ -23,11 +23,11 @@ public class ExerciseRemark
 	{
 		this.answer = answer;
 	}
-	public String getId()
+	public int getId()
 	{
 		return id;
 	}
-	public void setId(String id)
+	public void setId(int id)
 	{
 		this.id = id;
 	}
@@ -39,13 +39,13 @@ public class ExerciseRemark
 	{
 		this.remark = remark;
 	}
-	public ExerciseRemark(String id, String remark)
+	public ExerciseRemark(int id, String remark)
 	{
 		super();
 		this.id = id;
 		this.remark = remark;
 	}
-	public ExerciseRemark(String id)
+	public ExerciseRemark(int id)
 	{
 		this.id = id;
 	}

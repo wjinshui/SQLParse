@@ -2,9 +2,10 @@ package cn.edu.fjut.bean;
 
 public class ExerciseSubmission {
 
-	private String id, submitted_answer, ref_answer, exercise_id;
+	String submitted_answer, ref_answer, exercise_id;
 	private boolean is_correct;
-	private float score = 0;
+	private double score = 0;
+	private int id;
 	
 	
 
@@ -15,11 +16,11 @@ public class ExerciseSubmission {
 		this.submitted_answer = submitted_answer;
 	}
 
-	public float getScore() {
+	public double getScore() {
 		return score;
 	}
 
-	public void setScore(float score) {
+	public void setScore(double score) {
 		this.score = score;
 	}
 
@@ -31,7 +32,7 @@ public class ExerciseSubmission {
 		this.is_correct = is_correct;
 	}
 
-	public ExerciseSubmission(String id, String submitted_answer, String ref_answer, String exercise_id,
+	public ExerciseSubmission(int id, String submitted_answer, String ref_answer, String exercise_id,
 			boolean is_correct) {
 		super();
 		this.id = id;
@@ -41,7 +42,7 @@ public class ExerciseSubmission {
 		this.is_correct = is_correct;
 	}
 
-	public ExerciseSubmission(String id, String submitted_answer, String ref_answer, String exercise_id) {
+	public ExerciseSubmission(int id, String submitted_answer, String ref_answer, String exercise_id) {
 		super();
 		this.id = id;
 		submitted_answer = submitted_answer.trim();
@@ -59,7 +60,7 @@ public class ExerciseSubmission {
 		return exercise_id;
 	}
 
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 

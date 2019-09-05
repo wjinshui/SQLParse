@@ -72,15 +72,21 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		DBHelper dbHelper = DBHelper.getInstance();
 		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); 
 		String sql;
-		sql =  "select count(*) from person p where exists (select * from writer w where w.id=p.id group by w.id having year_born=1935)";
+		sql =  "Select production_year, count(production_year) from movie where production_year between 1991 and 1993 group by production_year;";
 		boolean singlesql = true;
 		//singlesql = false;
 		int begin = 0;
 		if (singlesql) {
 			SQLTree tree = singleSQL(sqlParse, sql);
-			System.out.println(tree.getNodeCount());
+			System.out.println("******************");
+			Set<String> nodes = tree.getNodes();
+			for (String string : nodes)
+			{
+				System.out.println(string);
+			}
 		} else
 			travelAll(sqlParse, submissions, begin);
+		
 	}
 
 	private static void travelAll(MySQLParse sqlParse, List<ExerciseSubmission> submissions, int begin) {
@@ -98,7 +104,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			if (sql.toLowerCase().contains("delete"))
 				continue;
 			SQLTree tree = sqlParse.parse(sql);
-			allNodes.addAll(tree.getNodes(false));
+			allNodes.addAll(tree.getNodes());
 
 		}
 		Set<String> newSet = new HashSet<>();

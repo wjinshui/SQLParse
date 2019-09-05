@@ -173,7 +173,6 @@ public class SQLTreeNode implements Serializable
 			if(sqlTreeNode.getSimpleData().equals("COMMA"))
 			{
 				result.addAll(sqlTreeNode.getChildrenWithoutTempNode());
-				
 			}
 			else {
 				result.add(sqlTreeNode);
