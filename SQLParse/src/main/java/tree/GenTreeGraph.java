@@ -49,7 +49,7 @@ public class GenTreeGraph {
 	public ListenableGraph<String, UnLabelEdge>  convertToGraph(SQLTree tree)
 	{
 		ListenableGraph<String, UnLabelEdge> g =
-                new DefaultListenableGraph<>(new DefaultUndirectedGraph<>(UnLabelEdge.class));
+                new DefaultListenableGraph<>(new DefaultUndirectedGraph(UnLabelEdge.class));
 		SQLTreeNode root = tree.getRoot();
 		if(root.hasChild())
 		{

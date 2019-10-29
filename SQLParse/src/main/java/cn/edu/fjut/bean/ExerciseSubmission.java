@@ -2,14 +2,25 @@ package cn.edu.fjut.bean;
 
 public class ExerciseSubmission {
 
-	String submitted_answer, ref_answer, exercise_id;
+	String submitted_answer, ref_answer, exercise_id;	
 	private boolean is_correct;
 	private double score = 0;
 	private int id;
+	private String remark;
 	
 	
 
 	
+
+	public String getRemark()
+	{
+		return remark;
+	}
+
+	public void setRemark(String remark)
+	{
+		this.remark = remark;
+	}
 
 	public void setSubmitted_answer(String submitted_answer)
 	{
@@ -41,6 +52,14 @@ public class ExerciseSubmission {
 		this.exercise_id = exercise_id;
 		this.is_correct = is_correct;
 	}
+	
+	
+	public ExerciseSubmission(int id, String submitted_answer, String ref_answer, String exercise_id,
+			boolean is_correct, String remark) {
+		this(id, submitted_answer, ref_answer, exercise_id, is_correct);
+		this.remark = remark;
+	}
+	
 
 	public ExerciseSubmission(int id, String submitted_answer, String ref_answer, String exercise_id) {
 		super();

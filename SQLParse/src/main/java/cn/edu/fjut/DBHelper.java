@@ -313,13 +313,14 @@ public class DBHelper {
 	public List<ExerciseSubmission> getSubmission(int exercise_id)	
 	{
 		List<ExerciseSubmission> results = new ArrayList<ExerciseSubmission>();
-		String sql = "select submission_id, submitted_answer, answer, exercise_id , is_correct "
+		String sql = "select submission_id, submitted_answer, answer, exercise_id , is_correct, remark "
 				+ "from exercises_result where exercise_id = " + exercise_id;
 		try {
 			ResultSet rSet = stmt.executeQuery(sql);
 			while(rSet.next())
 			{ 
-				ExerciseSubmission submission = new ExerciseSubmission(rSet.getInt(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5));
+				ExerciseSubmission submission = new ExerciseSubmission(rSet.getInt(1), rSet.getString(2), rSet.getString(3), rSet.getString(4), rSet.getBoolean(5), rSet.getString(6));
+				
 				results.add(submission);
 			}
 			rSet.close();
