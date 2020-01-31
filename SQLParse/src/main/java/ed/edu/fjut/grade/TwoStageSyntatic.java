@@ -51,7 +51,6 @@ public class TwoStageSyntatic extends SyntacticGrader
 		for (ExerciseSubmission submission : submissions)
 		{
 			String sql = submission.getSubmitted_answer(); 
-			sql = sql.toLowerCase();
 			Map<String, Object> keyValues = calBestScore(sql, refTrees);
 			double sim = Double.parseDouble( keyValues.get("score").toString());	
 			int index = Integer.parseInt(keyValues.get("index").toString());
@@ -68,7 +67,6 @@ public class TwoStageSyntatic extends SyntacticGrader
 		for (RefAnswer refAnswer : refAnswers)
 		{
 			String answer = refAnswer.getAnswer();
-			answer = answer.toLowerCase();
 			SQLTree tree = parser.parse(answer);
 			refTrees.add(tree);
 		}
@@ -80,7 +78,7 @@ public class TwoStageSyntatic extends SyntacticGrader
 	private Map<String, Object> calBestScore(String sql, List<SQLTree> refTrees)
 	{
 		Map<String, Object> keyValues = new HashMap<>();
-		double result = 0;
+		double result = -1;
 		SQLTree tree = parser.parse(sql);		
 		for (SQLTree refTree : refTrees)
 		{
@@ -92,8 +90,10 @@ public class TwoStageSyntatic extends SyntacticGrader
 				keyValues.put("score", result);
 				keyValues.put("index", refTrees.indexOf(refTree));
 			}
+			if(Double.parseDouble( keyValues.get("score").toString()) < 0)
+				keyValues.put("score", 0);
 		}
-
+		
 		return keyValues;
 	}
 	

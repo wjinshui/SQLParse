@@ -46,8 +46,8 @@ public class SematicGrader extends Grader
 	
 	public double calculateSim(String submitted_answer, String ref)
 	{
-		ref = utils.standdardize(ref).toLowerCase();
-		submitted_answer = utils.standdardize(submitted_answer).toLowerCase();
+		ref = utils.standdardize(ref);
+		submitted_answer = utils.standdardize(submitted_answer);
 		double value =  simCaltor.getSimiarity( ref, submitted_answer);		
 		return value;
 	}

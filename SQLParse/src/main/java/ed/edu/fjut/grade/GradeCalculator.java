@@ -23,7 +23,7 @@ public class GradeCalculator extends SyntacticGrader
 {
 	DBHelper dbHelper = DBHelper.getInstance();
 	public static final boolean IGNORE_ORDERBY = true; //Ignore the order by clause
-	public static final boolean IGNORE_CASE = true;  // Ignore the case of sql statmement
+
 	MySQLParse parser;
 
 	public GradeCalculator()
@@ -54,8 +54,6 @@ public class GradeCalculator extends SyntacticGrader
 		for (ExerciseSubmission submission : submissions)
 		{
 			sql = submission.getSubmitted_answer(); 
-			if(IGNORE_CASE)
-				sql = sql.toLowerCase();
 			double score = calBestScore(sql, refTrees);			
 			submission.setScore(score);
 			System.out.printf("%d: %d/%d, id: %s, score: %f\n", exercise_id, submissions.indexOf(submission), submissions.size(), submission.getId(), score);	
@@ -96,8 +94,6 @@ public class GradeCalculator extends SyntacticGrader
 		for (RefAnswer refAnswer : refAnswers)
 		{
 			String answer = refAnswer.getAnswer();
-			if(IGNORE_CASE)
-				answer = answer.toLowerCase();
 			SQLTree tree = parser.parse(answer);
 			refTrees.add(tree);
 		}

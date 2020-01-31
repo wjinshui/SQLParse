@@ -52,8 +52,6 @@ public class RefAnswerConstructor
 		for (RefAnswer correctAnw : correctAnws)
 		{
 			String answer = correctAnw.getAnswer();
-			if(GlobalSetting.IGNORE_CASE)
-				answer = answer.toLowerCase();
 			SQLTree tree = calculator.parseQuery(answer);
 			if(contains(refTrees, tree) == false)
 			{

@@ -1,10 +1,11 @@
 package cn.edu.fjut.util;
 
-import info.debatty.java.stringsimilarity.Levenshtein;
+
+import info.debatty.java.stringsimilarity.NormalizedLevenshtein;
 
 public class EditDistance
 {
-	Levenshtein caltor ;
+	NormalizedLevenshtein caltor ;
 	public static EditDistance instance = new EditDistance();
 	
 	public static EditDistance getInstance()
@@ -14,15 +15,14 @@ public class EditDistance
 	
 	public EditDistance()
 	{
-		caltor = new Levenshtein();
+		caltor = new NormalizedLevenshtein();
 	}	
 
 	public double getSimiarity(String ref, String stu)
 	{
 		double sim = 0;
 		double dis =  caltor.distance(ref, stu);
-		if(dis < ref.length() )		
-			sim = 1 - dis / ref.length();
+		sim = 1 - dis;
 		return sim;
 	}
 	

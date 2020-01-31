@@ -72,7 +72,13 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		DBHelper dbHelper = DBHelper.getInstance();
 		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); 
 		String sql;
-		sql =  "Select production_year, count(production_year) from movie where production_year between 1991 and 1993 group by production_year;";
+		sql =  "SELECT\n" + 
+				"    country\n" + 
+				"FROM\n" + 
+				"    Restriction\n" + 
+				"WHERE\n" + 
+				"    lower(Title) = 'shakespeare in love'\n" + 
+				"    AND description = 'M';;";
 		boolean singlesql = true;
 		//singlesql = false;
 		int begin = 0;
@@ -204,8 +210,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 				result = expr.toString();
 		}
 
-		else {
-			
+		else {			
 			System.out.println(owner);
 			System.exit(1);
 		}
@@ -371,10 +376,13 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			if (node == null)
 				node = new SQLTreeNode(expr.getName());
 			if (node.getData().contains(".") == false && expr.getResolvedTableSource() != null && node.isTempNode() ==false) {
-				if (expr.getResolvedTableSource().getAlias() != null)
-					node.setData(expr.getResolvedTableSource().getAlias() + "." + node.getData());
-				else
-					node.setData(expr.getResolvedTableSource().toString() + "." + node.getData());
+				/* 用alias就会受别名的影响了。
+				 * if (expr.getResolvedTableSource().getAlias() != null)
+				 * node.setData(expr.getResolvedTableSource().getAlias() + "." +
+				 * node.getData()); else node.setData(expr.getResolvedTableSource().toString() +
+				 * "." + node.getData());
+				 */
+				node.setData(expr.getResolvedTableSource().toString() +  "." + node.getData());
 			}
 			parentNode.addChild(node);
 		} else if (curObj instanceof SQLInListExpr) {
@@ -517,7 +525,7 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		} else if (curObj instanceof SQLCharExpr) {
 			SQLCharExpr expr = (SQLCharExpr) curObj;
 			SQLTreeNode node = new SQLTreeNode(expr.toString());
-			parentNode.addChild(node);
+			parentNode.addChildWithoutLowerCase(node);
 		} else if (curObj instanceof SQLCastExpr) {
 			SQLCastExpr expr = (SQLCastExpr) curObj;
 			SQLTreeNode node = new SQLTreeNode("Cast");
@@ -627,6 +635,9 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 			tree = new SQLTree();
 			SQLTreeNode root = tree.getRoot();
 			parseChild(root, select);
+			if(GlobalSetting.REMOVE_ORDERBY && tree.containsLimitNodes() == false)
+				tree.removeOrderBy();
+			
 		} catch (Exception e) {
 			log.log(sql + "\n ******************************\n");
 		}

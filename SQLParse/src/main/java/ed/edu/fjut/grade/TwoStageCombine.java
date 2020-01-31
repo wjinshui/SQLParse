@@ -42,7 +42,7 @@ public class TwoStageCombine extends TwoStageSyntatic
 	{
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		double result  = -1;
-		submitted_answer = utils.standdardize(submitted_answer).toLowerCase();
+		submitted_answer = utils.standdardize(submitted_answer);
 		for (RefAnswer refAnswer : correctAnswers)
 		{			
 			double value = simCaltor.getSimiarity(utils.standdardize( refAnswer.getAnswer()), submitted_answer);		

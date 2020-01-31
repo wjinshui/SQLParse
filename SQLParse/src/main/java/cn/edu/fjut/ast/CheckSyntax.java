@@ -18,7 +18,6 @@ public class CheckSyntax
 	public static void main(String[] args)
 	{
 		DBHelper dbHelper = DBHelper.getInstance();
-		//List<ExerciseSubmission> submissions = dbHelper.getAllSubmission();
 		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where  submitted_answer like '%;%;%' and remark != 'noninterpretable' order by length(submitted_answer) desc ");
 		List<ExerciseRemark> remarks = new ArrayList<>();
 		int i =0;

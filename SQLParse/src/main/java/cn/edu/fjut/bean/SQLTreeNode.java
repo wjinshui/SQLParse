@@ -12,7 +12,7 @@ import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 
-public class SQLTreeNode implements Serializable 
+public class SQLTreeNode implements Serializable , Comparable<SQLTreeNode>
 {
 	
 	/**
@@ -23,9 +23,9 @@ public class SQLTreeNode implements Serializable
 	// Join类型不能删，是一个用来区别的很重要指标．例如3700和２１４０的区别：
 	// 3700:select count(distinct p.id) from person p inner join writer w where p.year_born = 1935;  
 	// 2140:select count(distinct id) from person p natural join writer w where p.year_born = 1935
-	private static final String[] TempNodes = {"ROOT", "SubSelect",  "BinaryOp","MethodInvoke" ,  "UnionQuery", "On","Left", "Right", 
-			"UnionQuery","InList","List", "InSubQuery", "COMMA",
-			"BetweenOper","Range","NotExpr","Function" };	
+	private static final String[] TempNodes = {"root", "subSelect",  "binaryop","methodinvoke" ,  "unionquery", "on","left", "right", 
+			"unionquery","inlist","list", "insubquery", "comma",
+			"betweenoper","range","notexpr","function" };	
 	private static List<String> tempNodeList;
 	public static SQLExpr ROOT = new SQLCharExpr("ROOT"); 
 	private SQLObject type;
@@ -59,33 +59,10 @@ public class SQLTreeNode implements Serializable
 		return data.split(":")[0];
 	}
 	
-	public void removeNodeFromTree(String data)
-	{
-		SQLTreeNode root = getRoot();
-		removeNode(root.getChildren(), data);
-	}
 
-	private void removeNode(List<SQLTreeNode> nodes, String data)
-	{
-		for(int i =0; i< nodes.size(); i++)
-			if( nodes.get(i).getData().equals(data))
-			{
-				nodes.remove(i);
-				return;
-			}
-			else {
-				removeNode(nodes.get(i).getChildren(), data);
-			}
-		
-	}
 
-	private SQLTreeNode getRoot()
-	{
-		if(getData().equals("ROOT"))
-			return this;
-		else
-			return getParent().getRoot();
-	}
+
+
 
 	public SQLTreeNode(SQLExpr type, String data) {
 		data = getUnusedName(data);
@@ -115,6 +92,13 @@ public class SQLTreeNode implements Serializable
 	}
 
 	public void addChild(SQLTreeNode node)
+	{
+		String data = node.getData().toLowerCase();
+		node.setData(data);
+		addChild(node, true);
+	}
+	
+	public void addChildWithoutLowerCase(SQLTreeNode node)
 	{
 		addChild(node, true);
 	}
@@ -170,7 +154,7 @@ public class SQLTreeNode implements Serializable
 		List<SQLTreeNode> children = getChildren();
 		List<SQLTreeNode> result = new ArrayList<>();
 		for (SQLTreeNode sqlTreeNode : children) {
-			if(sqlTreeNode.getSimpleData().equals("COMMA"))
+			if(sqlTreeNode.getSimpleData().equalsIgnoreCase("comma"))
 			{
 				result.addAll(sqlTreeNode.getChildrenWithoutTempNode());
 			}
@@ -207,6 +191,12 @@ public class SQLTreeNode implements Serializable
 	public boolean isTempNode()
 	{
 		return tempNodeList.contains(this.getSimpleData());
+		
+	}
+
+	@Override
+	public int compareTo(SQLTreeNode o) {
+		return getSimpleData().compareTo(o.getSimpleData());		
 		
 	}
 	
