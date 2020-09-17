@@ -36,15 +36,15 @@ public abstract class Grader
 	
 	public static void main(String[] args)
 	{
-		Grader grader = new TwoStageSyntatic();
+		Grader grader = new TwoStageCombine();
 		for(int i = 1; i<= GlobalSetting.MAX_EXERCISE_ID; i++)
 		{
 			System.out.println("grading exericse_id: " + i);
 			grader.gradeStatement(i);
 		}
-		//grader.updateDB();
+		grader.updateDB();
 		
-		grader.updateResult();  //# 只用在2-steps model中，后面的数据都将评分结果保存在grade表中了
+		//grader.updateResult();  //# 只用在2-steps model中，后面的数据都将评分结果保存在grade表中了
 		System.out.println("Completed!");
 	}
 

@@ -30,7 +30,7 @@ public class TwoStageSyntatic extends SyntacticGrader
 	protected void gradeCorrect(int exercise_id)
 	{
 		List<ExerciseSubmission> submissions = dbHelper
-				.getSubmissionWithCond(" where remark = 'correct' and exercise_id =   " + exercise_id);
+				.getSubmissionWithCond(" where (remark = 'correct' or remark = 'cheating') and exercise_id =   " + exercise_id);
 		for (ExerciseSubmission submission : submissions)
 		{
 			ExerciseGrade grade = new ExerciseGrade(submission.getId(), submission.getSubmitted_answer(), approach);
@@ -43,7 +43,7 @@ public class TwoStageSyntatic extends SyntacticGrader
 	protected void gradePartiallyCorrect(int exercise_id)
 	{
 		List<ExerciseSubmission> submissions = dbHelper
-				.getSubmissionWithCond(" where ( remark = 'partially correct' or remark = 'cheating' ) and exercise_id =   " + exercise_id);			 																														
+				.getSubmissionWithCond(" where ( remark = 'partially correct'  ) and exercise_id =   " + exercise_id);			 																														
 		//List<RefAnswer> refAnswers = dbHelper.getCorrectAnswers(exercise_id);
 		List<RefAnswer> refAnswers = dbHelper.getRefAnswers(exercise_id);
 		List<SQLTree> refTrees = getRefTrees(refAnswers);	

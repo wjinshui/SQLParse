@@ -13,10 +13,14 @@ public class NormalizedAPTED<C extends CostModel, D> extends APTED<CostModel, D>
 
 	@Override
 	public float computeEditDistance(Node<D> t1, Node<D> t2) {
-        int m_len = Math.max(t1.getNodeCount(), t2.getNodeCount());
+        int m_len = Math.max(t1.getNodeCount(), t2.getNodeCount()); 
         if (m_len == 0) {
             return 0;
         }
-		return  super.computeEditDistance(t1, t2) / m_len;
+        float distance = super.computeEditDistance(t1, t2);
+        if(distance < 0)
+        	System.out.println(distance);
+        
+		return  (2 * distance) / (t1.getNodeCount() + t2.getNodeCount() + distance);
 	}
 }

@@ -73,12 +73,11 @@ public class MySQLParse extends SQLASTVisitorAdapter {
 		List<ExerciseSubmission> submissions = dbHelper.getSubmissionWithCond(" where is_correct =1  "); 
 		String sql;
 		sql =  "SELECT\n" + 
-				"    country\n" + 
+				"    ID, First_name, Last_name\n" + 
 				"FROM\n" + 
-				"    Restriction\n" + 
+				"    Person p join Writer w on p.id = w.id\n" + 
 				"WHERE\n" + 
-				"    lower(Title) = 'shakespeare in love'\n" + 
-				"    AND description = 'M';;";
+				"    LOWER(Last_name)='allen' ";
 		boolean singlesql = true;
 		//singlesql = false;
 		int begin = 0;

@@ -46,8 +46,8 @@ public class DBHelper {
         uid ="postgres";
         try{
         	Class.forName("org.sqlite.JDBC");
-        	//conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB.sqlite");
-        	conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB for 2-steps.sqlite");
+        	conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB.sqlite");
+        	//conn = DriverManager.getConnection("jdbc:sqlite:src/main/resources/DB for 2-steps.sqlite");
             stmt = conn.createStatement();          
         }
         catch (Exception e) {

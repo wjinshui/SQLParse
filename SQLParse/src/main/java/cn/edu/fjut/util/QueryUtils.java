@@ -13,12 +13,15 @@ public class QueryUtils
 	
 	private String regularizedSpace(String query)
 	{
-		query = query.replaceAll("\\s*([^\\w])\\s*", "$1").trim();	
+		query = query.replaceAll("\\s*([^\\w\\W])\\s*", "$1").trim();	
 		query = query.replaceAll(";", "");
 		return query;
 	}
-	private String replaceAlais(String query)
-	{
-		return query;
+
+	public static void main(String[] args) {
+		String string = " select    *  a	-      sadff      	a"
+				+ " from FFF ";
+		QueryUtils utils = new QueryUtils();
+		System.out.println(utils.standdardize(string));
 	}
 }
